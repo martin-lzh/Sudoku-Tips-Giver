@@ -1,79 +1,95 @@
 # Sudoku Tips Giver
 
-This project provides tools to assist with solving Sudoku puzzles. It includes functions to check the validity of a number in a Sudoku board, find the most constrained cell, convert a string representation of a Sudoku board to a 2D list, and check if the board is solved. Additionally, it includes a `Board` class to represent and manipulate a Sudoku board.
+A modern, interactive Sudoku web application that helps users solve Sudoku puzzles with intelligent hints and features.
+
+## Features
+
+- **Multiple Difficulty Levels**
+  - Easy (35-40 numbers)
+  - Medium (25-30 numbers)
+  - Default (20-25 numbers)
+
+- **Smart Hint System**
+  - Provides intelligent hints based on Sudoku solving techniques
+  - Shows possible numbers for each cell
+  - Highlights the most logical next move
+
+- **Interactive Interface**
+  - Clean and modern design
+  - Dark/Light theme support
+  - Bilingual support (English/Chinese)
+  - Keyboard navigation
+  - Real-time validation
+
+- **Advanced Features**
+  - Unique solution guarantee for generated puzzles
+  - Auto-save progress
+  - Step-by-step solution display
+  - Instant completion validation
+
+## Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/sudoku-tips-giver.git
+cd sudoku-tips-giver
+```
+
+2. Install the required dependencies:
+```bash
+pip install flask flask-cors
+```
+
+3. Run the application:
+```bash
+python app.py
+```
+
+4. Open your browser and navigate to:
+```
+http://localhost:5000
+```
 
 ## Usage
 
-### main.ipynb
+1. **Generate a New Puzzle**
+   - Select difficulty level (Easy/Medium/Hard)
+   - Click "Generate Sudoku" button
 
-The `main.ipynb` notebook demonstrates how to use the `Board` class and its methods. Below is a brief overview of the steps:
+2. **Playing the Game**
+   - Click on any cell to input numbers
+   - Use keyboard arrows for navigation
+   - Use Space key to move to next cell
+   - Use Backspace key to clear and move to previous cell
+   - Numbers 1-9 for input
+   - System automatically moves to next cell after input
 
-1. **Import the Board class:**
+3. **Getting Help**
+   - Click "Get Hint" for suggestions
+   - Click "Show Answer" to reveal the correct number in the highlighted cell
+   - The system will automatically validate your solution when completed
 
-    ```python
-    from functions import Board
-    ```
+4. **Additional Controls**
+   - Use the theme toggle (🌓) for dark/light mode
+   - Use the language toggle (中/En) to switch between Chinese and English
+   - Click "Clear Board" to reset the current puzzle
 
-2. **Create a Board object:**
+## Technical Details
 
-    ```python
-    board = Board()
-    ```
+- Frontend: HTML5, CSS3, JavaScript (Vanilla)
+- Backend: Python Flask
+- Features:
+  - CORS support for API access
+  - Responsive design
+  - Local storage for settings persistence
+  - Efficient Sudoku generation algorithm
+  - Unique solution verification
 
-3. **Load a board from a string:**
+## License
 
-    ```python
-    s = "001030000/002000040/006501029/230607080/000803000/010004367/420108500/080000000/000070408"
-    board.string_to_board(s)
-    ```
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-4. **Print the board:**
+## Acknowledgments
 
-    ```python
-    for row in board.board:
-        print(row, end="\n")
-    ```
-
-5. **Check if the board is solved and find the most constrained cell:**
-
-    ```python
-    if board.is_solved():
-        print("The board is solved!")
-    else:
-        i, j, const = board.find_constraint()
-        print("On row ", i+1, "and column ", j+1, "the block has ", const, "possibilities!")
-    ```
-
-6. **Add a number to the board:**
-
-    ```python
-    board.add(row=9, col=8, num=1)
-    ```
-
-7. **Remove a number from the board:**
-
-    ```python
-    board.remove(row=9, col=8)
-    ```
-
-### functions.py
-
-The `functions.py` file contains the implementation of the `Board` class and several helper functions:
-
-- **is_valid(board, row, col, num):** Checks if a number is valid in a given cell of the Sudoku board.
-- **find_constraint(board):** Finds the most constrained empty cell in the Sudoku board.
-- **string_to_board(s):** Converts a string representation of a Sudoku board to a 2D list.
-- **is_solved(board):** Checks if the Sudoku board is solved.
-- **board_to_string(board):** Converts a 2D list representation of a Sudoku board into a string.
-
-### Board Class
-
-The `Board` class provides methods to manipulate the Sudoku board:
-
-- **add(row, col, num):** Add a number to the board at the specified position.
-- **remove(row, col):** Remove a number from the board at the specified position.
-- **is_valid(row, col, num):** Check if a number can be placed in a given position on the Sudoku board.
-- **is_solved():** Check if the Sudoku board is solved.
-- **find_constraint():** Finds the cell with the minimum number of possible values (constraints) in the Sudoku board.
-- **string_to_board(s):** Converts a string representation of a Sudoku board into a 2D list.
-- **board_to_string():** Converts a 2D list representation of a Sudoku board into a string.
+- Thanks to all contributors and users who provided feedback
+- Special thanks to the Flask and Python communities for their excellent documentation
