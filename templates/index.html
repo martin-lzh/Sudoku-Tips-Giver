@@ -675,14 +675,19 @@
                         }
                         
                         const value = e.target.value;
-                        if (value && (isNaN(value) || value < 1 || value > 9)) {
+                        if (value === '0') {  // 如果输入0
+                            e.target.value = '';  // 清空格子
+                            board[i][j] = 0;
+                            moveToNextCell(i, j);  // 移动到下一个格子
+                            checkCompletion();
+                        } else if (value && (isNaN(value) || value < 0 || value > 9)) {
                             e.target.value = '';
                         } else {
                             board[i][j] = value ? parseInt(value) : 0;
-                            if (value) {
+                            if (value) {  // 只有输入1-9时才移动到下一个格子
                                 moveToNextCell(i, j);
                             }
-                            checkCompletion();  // 检查是否完成
+                            checkCompletion();
                         }
                     });
 
