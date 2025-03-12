@@ -4,6 +4,10 @@ A modern, interactive Sudoku web application that helps users solve Sudoku puzzl
 
 一个现代化的数独提示器 Web 应用，帮助用户解决数独难题，提供智能提示和功能。
 
+## Live Demo | 在线演示
+
+[Try it online](http://8.130.127.233/) | [在线体验](http://8.130.127.233/)
+
 ## Copyright | 版权
 
 Copyright (c) 2025 Sudoku Tips Giver. All rights reserved.
