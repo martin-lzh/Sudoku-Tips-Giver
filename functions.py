@@ -1,4 +1,9 @@
 """
+Sudoku Tips Giver
+Copyright (c) 2025 Sudoku Tips Giver
+
+Core functionality module for Sudoku puzzle generation and validation.
+
 This module provides functions and a class to assist with solving Sudoku puzzles. 
 It includes functions to check the validity of a number in a Sudoku board, 
 find the most constrained cell, convert a string representation of a Sudoku board 

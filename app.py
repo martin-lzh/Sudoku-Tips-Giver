@@ -1,3 +1,10 @@
+"""
+Sudoku Tips Giver
+Copyright (c) 2025 Sudoku Tips Giver
+
+A web application that helps users solve Sudoku puzzles with intelligent hints.
+"""
+
 from flask import Flask, render_template, jsonify, request
 from functions import Board, is_valid
 from sudoku_solver import get_next_hint, solve_sudoku

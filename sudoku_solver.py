@@ -1,3 +1,10 @@
+"""
+Sudoku Tips Giver
+Copyright (c) 2025 Sudoku Tips Giver
+
+Sudoku solving algorithm implementation and hint generation.
+"""
+
 from functions import Board, is_valid
 import copy
 
