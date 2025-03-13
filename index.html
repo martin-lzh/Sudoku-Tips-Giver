@@ -812,7 +812,7 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             const row = parseInt(selectedCell.dataset.row);
             const col = parseInt(selectedCell.dataset.col);
             
-            if (e.key >= '1' && e.key <= '9') {
+            if (e.key >= '0' && e.key <= '9') {
                 const num = parseInt(e.key);
                 if (isDraftMode) {
                     // 在草稿模式下处理输入
@@ -827,8 +827,14 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                     }
                 } else {
                     // 在正常模式下处理输入
-                    if (!sudokuBoard.isInitialCell(row, col) && sudokuBoard.isValid(row, col, num)) {
-                        sudokuBoard.board[row][col] = num;
+                    if (!sudokuBoard.isInitialCell(row, col)) {
+                        if (num === 0) {
+                            // 输入0时清除数字
+                            sudokuBoard.board[row][col] = 0;
+                        } else {
+                            // 直接设置数字，不进行有效性检查
+                            sudokuBoard.board[row][col] = num;
+                        }
                         // 清除该格子的所有草稿数字
                         sudokuBoard.clearDraftNumbers(row, col);
                         updateGrid();
