@@ -10,7 +10,7 @@ services:
       - FLASK_APP=app.py
       - FLASK_ENV=production
     volumes:
-      - .:/app
+      - ./flask_version:/app
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000"]
       interval: 30s

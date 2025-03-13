@@ -94,15 +94,19 @@ The full version includes a Flask backend for enhanced functionality:
 完整版本包含 Flask 后端，提供更多功能：
 
 1. Clone this repository | 克隆此仓库
-2. Install dependencies | 安装依赖
+2. Navigate to Flask version directory | 进入 Flask 版本目录
+   ```bash
+   cd flask_version
+   ```
+3. Install dependencies | 安装依赖
    ```bash
    pip install -r requirements.txt
    ```
-3. Run the application | 运行应用
+4. Run the application | 运行应用
    ```bash
    python app.py
    ```
-4. Access at `http://localhost:5000` | 访问 `http://localhost:5000`
+5. Access at `http://localhost:5000` | 访问 `http://localhost:5000`
 
 #### Features | 特点
 - Full backend support | 完整后端支持
@@ -151,12 +155,14 @@ Deploy using Docker for containerized environment:
 
 ```
 .
-├── app.py              # Flask backend | Flask 后端
-├── functions.py        # Core functions | 核心函数
-├── sudoku_solver.py    # Sudoku solver | 数独求解器
-├── templates/          # HTML templates | HTML 模板
-├── static/            # Static files | 静态文件
-├── requirements.txt   # Python dependencies | Python 依赖
+├── index.html          # Static version | 静态版本
+├── js/                # JavaScript files | JavaScript 文件
+├── flask_version/     # Flask version | Flask 版本
+│   ├── app.py              # Flask backend | Flask 后端
+│   ├── functions.py        # Core functions | 核心函数
+│   ├── sudoku_solver.py    # Sudoku solver | 数独求解器
+│   ├── templates/          # HTML templates | HTML 模板
+│   └── requirements.txt    # Python dependencies | Python 依赖
 ├── Dockerfile        # Docker configuration | Docker 配置
 ├── docker-compose.yml # Docker Compose config | Docker Compose 配置
 └── README.md         # This file | 本文件
