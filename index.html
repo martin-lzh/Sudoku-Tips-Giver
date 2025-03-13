@@ -304,6 +304,7 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
         let currentTheme = 'light';
         let sudokuBoard = new SudokuBoard();
         let selectedCell = null;
+        let lastSavedBoard = null;  // 添加变量存储上次保存的棋盘状态
 
         // DOM 元素
         const grid = document.getElementById('grid');
@@ -416,9 +417,17 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
         function loadSettings() {
             const savedLang = localStorage.getItem('language');
             const savedTheme = localStorage.getItem('theme');
+            const savedBoard = localStorage.getItem('sudokuBoard');
+            const savedSolution = localStorage.getItem('sudokuSolution');
             
             if (savedLang) currentLang = savedLang;
             if (savedTheme) currentTheme = savedTheme;
+            if (savedBoard && savedSolution) {
+                sudokuBoard.board = JSON.parse(savedBoard);
+                sudokuBoard.solution = JSON.parse(savedSolution);
+                lastSavedBoard = JSON.parse(savedBoard);
+                updateGrid();
+            }
             
             document.body.setAttribute('data-theme', currentTheme);
         }
@@ -427,6 +436,13 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
         function saveSettings() {
             localStorage.setItem('language', currentLang);
             localStorage.setItem('theme', currentTheme);
+            // 只有当棋盘状态发生变化时才保存
+            const currentBoard = JSON.stringify(sudokuBoard.board);
+            if (currentBoard !== JSON.stringify(lastSavedBoard)) {
+                localStorage.setItem('sudokuBoard', currentBoard);
+                localStorage.setItem('sudokuSolution', JSON.stringify(sudokuBoard.solution));
+                lastSavedBoard = sudokuBoard.board;
+            }
         }
 
         // 显示加载动画
@@ -454,6 +470,7 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                 cell.textContent = value || '';
                 cell.classList.toggle('initial', value !== 0);
             });
+            saveSettings();  // 每次更新网格后保存状态
         }
 
         // 事件监听器
@@ -537,10 +554,12 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                 if (sudokuBoard.isValid(row, col, num)) {
                     selectedCell.textContent = num;
                     sudokuBoard.board[row][col] = num;
+                    saveSettings();  // 输入数字后保存状态
                 }
             } else if (e.key === 'Backspace') {
                 selectedCell.textContent = '';
                 sudokuBoard.board[row][col] = 0;
+                saveSettings();  // 删除数字后保存状态
             } else if (e.key === 'ArrowUp' && row > 0) {
                 document.querySelector(`[data-row="${row-1}"][data-col="${col}"]`).click();
             } else if (e.key === 'ArrowDown' && row < 8) {
