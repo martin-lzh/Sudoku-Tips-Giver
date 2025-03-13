@@ -22,6 +22,8 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
   - Bilingual support (English/Chinese) | 双语支持 (中文/英文)
   - Keyboard navigation | 键盘导航
   - Real-time validation | 实时验证
+  - Responsive design for all devices | 全设备响应式设计
+  - Optimized mobile experience | 优化的移动端体验
 
 - **Auto-Save Progress | 自动保存进度**
   - Automatically saves game state | 自动保存游戏状态
@@ -30,9 +32,33 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
   - Works offline | 支持离线使用
   - Cross-device sync (static version) | 跨设备同步（静态版本）
 
+## Source Code | 源代码
+
+[GitHub Repository | GitHub 仓库](https://github.com/martin-lzh/Sudoku-Tips-Giver)
+
 ## Live Demo | 在线演示
 
-[Try it online](https://martin-lzh.github.io/Sudoku-Tips-Giver/) | [在线体验](https://martin-lzh.github.io/Sudoku-Tips-Giver/)
+[Try it online | 在线体验](https://martin-lzh.github.io/Sudoku-Tips-Giver)
+
+## Mobile Optimization | 移动端优化
+
+- **Responsive Grid | 响应式棋盘**
+  - Auto-adjusting grid size | 自适应棋盘大小
+  - Optimized touch targets | 优化的触控区域
+  - Clear cell borders | 清晰的单元格边框
+  - Enhanced visibility | 增强的可视性
+
+- **Adaptive Controls | 自适应控制**
+  - Floating action buttons | 浮动操作按钮
+  - Easy-to-reach controls | 便捷的控制按钮
+  - Touch-friendly interface | 触控友好的界面
+  - Gesture support | 手势支持
+
+- **Screen Size Support | 屏幕尺寸支持**
+  - Large screens (tablets/desktop) | 大屏设备（平板/桌面）
+  - Medium screens (phones) | 中等屏幕（手机）
+  - Small screens (compact phones) | 小屏设备（小屏手机）
+  - Portrait and landscape modes | 竖屏和横屏模式
 
 ## Deployment Options | 部署选项
 
