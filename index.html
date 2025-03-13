@@ -1,0 +1,563 @@
+<!--
+Sudoku Tips Giver
+Copyright (c) 2025 Sudoku Tips Giver
+
+A web application that helps users solve Sudoku puzzles with intelligent hints.
+-->
+
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudoku Tips Giver | 数独提示器</title>
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --grid-bg: #f0f0f0;
+            --cell-border: #999999;
+            --highlight-color: #4CAF50;
+            --button-bg: #4CAF50;
+            --button-text: #ffffff;
+            --button-hover: #45a049;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --text-color: #ffffff;
+            --grid-bg: #2d2d2d;
+            --cell-border: #666666;
+            --highlight-color: #66bb6a;
+            --button-bg: #66bb6a;
+            --button-text: #ffffff;
+            --button-hover: #81c784;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+        }
+
+        select, button {
+            padding: 8px 16px;
+            margin: 5px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        select {
+            background-color: var(--grid-bg);
+            color: var(--text-color);
+        }
+
+        button:hover {
+            background-color: var(--button-hover);
+        }
+
+        .grid {
+            display: inline-block;
+            background-color: var(--grid-bg);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .row {
+            display: flex;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--cell-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            background-color: var(--bg-color);
+        }
+
+        .cell:nth-child(3n) {
+            border-right: 2px solid var(--cell-border);
+        }
+
+        .row:nth-child(3n) .cell {
+            border-bottom: 2px solid var(--cell-border);
+        }
+
+        .cell.highlight {
+            background-color: var(--highlight-color);
+            color: var(--button-text);
+        }
+
+        .cell.initial {
+            font-weight: bold;
+        }
+
+        .theme-toggle, .lang-toggle {
+            position: fixed;
+            top: 20px;
+            padding: 8px 16px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .theme-toggle {
+            right: 20px;
+        }
+
+        .lang-toggle {
+            right: 100px;
+        }
+
+        .help-button {
+            position: fixed;
+            top: 20px;
+            right: 180px;
+            padding: 8px 16px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: relative;
+            background-color: var(--bg-color);
+            margin: 10% auto;
+            padding: 20px;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 8px;
+            color: var(--text-color);
+        }
+
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 10px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .loading-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .loading-spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--bg-color);
+            border-top: 5px solid var(--button-bg);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sudoku Tips Giver | 数独提示器</h1>
+        
+        <div class="controls">
+            <select id="difficulty">
+                <option value="easy">简单 | Easy</option>
+                <option value="medium">中等 | Medium</option>
+                <option value="hard">困难 | Hard</option>
+            </select>
+            <button id="generate">生成数独 | Generate Sudoku</button>
+            <button id="hint">获取提示 | Get Hint</button>
+            <button id="answer">显示答案 | Show Answer</button>
+            <button id="clear">清空棋盘 | Clear Board</button>
+        </div>
+
+        <div class="grid" id="grid">
+            <!-- 数独格子将通过 JavaScript 动态生成 -->
+        </div>
+
+        <div id="message"></div>
+    </div>
+
+    <button class="theme-toggle" id="themeToggle">🌓</button>
+    <button class="lang-toggle" id="langToggle">中/En</button>
+    <button class="help-button" id="helpButton">?</button>
+
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="helpContent">
+                <!-- 帮助内容将通过 JavaScript 动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <script src="js/sudoku.js"></script>
+    <script>
+        // 语言配置
+        const translations = {
+            en: {
+                title: "Sudoku Tips Giver",
+                difficulty: "Difficulty",
+                easy: "Easy",
+                medium: "Medium",
+                hard: "Hard",
+                generate: "Generate Sudoku",
+                hint: "Get Hint",
+                answer: "Show Answer",
+                clear: "Clear Board",
+                loading: "Generating...",
+                help: {
+                    title: "Help Guide",
+                    difficulty: "Difficulty Levels",
+                    buttons: "Button Functions",
+                    controls: "How to Play",
+                    interface: "Interface Controls"
+                }
+            },
+            zh: {
+                title: "数独提示器",
+                difficulty: "难度",
+                easy: "简单",
+                medium: "中等",
+                hard: "困难",
+                generate: "生成数独",
+                hint: "获取提示",
+                answer: "显示答案",
+                clear: "清空棋盘",
+                loading: "正在生成...",
+                help: {
+                    title: "使用帮助",
+                    difficulty: "难度级别",
+                    buttons: "按钮功能",
+                    controls: "操作说明",
+                    interface: "界面控制"
+                }
+            }
+        };
+
+        // 全局变量
+        let currentLang = 'zh';
+        let currentTheme = 'light';
+        let sudokuBoard = new SudokuBoard();
+        let selectedCell = null;
+
+        // DOM 元素
+        const grid = document.getElementById('grid');
+        const difficultySelect = document.getElementById('difficulty');
+        const generateButton = document.getElementById('generate');
+        const hintButton = document.getElementById('hint');
+        const answerButton = document.getElementById('answer');
+        const clearButton = document.getElementById('clear');
+        const themeToggle = document.getElementById('themeToggle');
+        const langToggle = document.getElementById('langToggle');
+        const helpButton = document.getElementById('helpButton');
+        const helpModal = document.getElementById('helpModal');
+        const helpContent = document.getElementById('helpContent');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const messageDiv = document.getElementById('message');
+
+        // 初始化
+        function init() {
+            createGrid();
+            loadSettings();
+            updateUI();
+        }
+
+        // 创建数独网格
+        function createGrid() {
+            grid.innerHTML = '';
+            for (let i = 0; i < 9; i++) {
+                const row = document.createElement('div');
+                row.className = 'row';
+                for (let j = 0; j < 9; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    cell.addEventListener('click', () => selectCell(cell));
+                    row.appendChild(cell);
+                }
+                grid.appendChild(row);
+            }
+        }
+
+        // 选择格子
+        function selectCell(cell) {
+            if (selectedCell) {
+                selectedCell.classList.remove('highlight');
+            }
+            selectedCell = cell;
+            cell.classList.add('highlight');
+        }
+
+        // 更新界面
+        function updateUI() {
+            const t = translations[currentLang];
+            
+            // 更新标题
+            document.title = t.title;
+            
+            // 更新按钮文本
+            generateButton.textContent = t.generate;
+            hintButton.textContent = t.hint;
+            answerButton.textContent = t.answer;
+            clearButton.textContent = t.clear;
+            
+            // 更新难度选择
+            difficultySelect.innerHTML = `
+                <option value="easy">${t.easy}</option>
+                <option value="medium">${t.medium}</option>
+                <option value="hard">${t.hard}</option>
+            `;
+            
+            // 更新帮助内容
+            updateHelpContent();
+        }
+
+        // 更新帮助内容
+        function updateHelpContent() {
+            const t = translations[currentLang].help;
+            helpContent.innerHTML = `
+                <h2>${t.title}</h2>
+                <h3>${t.difficulty}</h3>
+                <ul>
+                    <li>${currentLang === 'zh' ? '简单' : 'Easy'}: 35-40 ${currentLang === 'zh' ? '个初始数字' : 'initial numbers'}</li>
+                    <li>${currentLang === 'zh' ? '中等' : 'Medium'}: 25-30 ${currentLang === 'zh' ? '个初始数字' : 'initial numbers'}</li>
+                    <li>${currentLang === 'zh' ? '困难' : 'Hard'}: 20-25 ${currentLang === 'zh' ? '个初始数字' : 'initial numbers'}</li>
+                </ul>
+                <h3>${t.buttons}</h3>
+                <ul>
+                    <li>${currentLang === 'zh' ? '生成数独' : 'Generate Sudoku'}: ${currentLang === 'zh' ? '根据选择的难度生成新的数独题目' : 'Creates a new puzzle based on selected difficulty'}</li>
+                    <li>${currentLang === 'zh' ? '获取提示' : 'Get Hint'}: ${currentLang === 'zh' ? '高亮显示最适合填写的格子，并提供可能的数字' : 'Highlights the most suitable cell to fill and shows possible numbers'}</li>
+                    <li>${currentLang === 'zh' ? '显示答案' : 'Show Answer'}: ${currentLang === 'zh' ? '在高亮格子中填入正确答案' : 'Fills in the correct number in the highlighted cell'}</li>
+                    <li>${currentLang === 'zh' ? '清空棋盘' : 'Clear Board'}: ${currentLang === 'zh' ? '清除所有已填写的数字，重新开始' : 'Removes all filled numbers and starts over'}</li>
+                </ul>
+                <h3>${t.controls}</h3>
+                <ul>
+                    <li>${currentLang === 'zh' ? '使用鼠标点击格子或键盘方向键进行导航' : 'Use mouse clicks or arrow keys for navigation'}</li>
+                    <li>${currentLang === 'zh' ? '直接输入数字 1-9' : 'Input numbers 1-9 directly'}</li>
+                    <li>${currentLang === 'zh' ? '按退格键清除当前格子' : 'Press Backspace to clear current cell'}</li>
+                    <li>${currentLang === 'zh' ? '系统会自动检查是否完成' : 'System automatically checks for completion'}</li>
+                </ul>
+                <h3>${t.interface}</h3>
+                <ul>
+                    <li>🌓: ${currentLang === 'zh' ? '切换深色/浅色主题' : 'Toggle dark/light theme'}</li>
+                    <li>中/En: ${currentLang === 'zh' ? '切换中文/英文界面' : 'Switch between Chinese/English'}</li>
+                    <li>?: ${currentLang === 'zh' ? '显示/隐藏帮助信息' : 'Show/hide help information'}</li>
+                </ul>
+            `;
+        }
+
+        // 加载设置
+        function loadSettings() {
+            const savedLang = localStorage.getItem('language');
+            const savedTheme = localStorage.getItem('theme');
+            
+            if (savedLang) currentLang = savedLang;
+            if (savedTheme) currentTheme = savedTheme;
+            
+            document.body.setAttribute('data-theme', currentTheme);
+        }
+
+        // 保存设置
+        function saveSettings() {
+            localStorage.setItem('language', currentLang);
+            localStorage.setItem('theme', currentTheme);
+        }
+
+        // 显示加载动画
+        function showLoading() {
+            loadingOverlay.style.display = 'block';
+            generateButton.disabled = true;
+            generateButton.textContent = translations[currentLang].loading;
+        }
+
+        // 隐藏加载动画
+        function hideLoading() {
+            loadingOverlay.style.display = 'none';
+            generateButton.disabled = false;
+            generateButton.textContent = translations[currentLang].generate;
+        }
+
+        // 更新数独显示
+        function updateGrid() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                const row = parseInt(cell.dataset.row);
+                const col = parseInt(cell.dataset.col);
+                const value = sudokuBoard.board[row][col];
+                
+                cell.textContent = value || '';
+                cell.classList.toggle('initial', value !== 0);
+            });
+        }
+
+        // 事件监听器
+        generateButton.addEventListener('click', async () => {
+            showLoading();
+            
+            // 使用 setTimeout 模拟异步操作
+            setTimeout(() => {
+                const difficulty = difficultySelect.value;
+                sudokuBoard.generatePuzzle(difficulty);
+                updateGrid();
+                hideLoading();
+            }, 100);
+        });
+
+        hintButton.addEventListener('click', () => {
+            if (!selectedCell) return;
+            
+            const row = parseInt(selectedCell.dataset.row);
+            const col = parseInt(selectedCell.dataset.col);
+            
+            if (sudokuBoard.board[row][col] !== 0) return;
+            
+            const hint = sudokuBoard.getHint();
+            if (hint) {
+                selectedCell.textContent = hint.value;
+                sudokuBoard.board[row][col] = hint.value;
+            }
+        });
+
+        answerButton.addEventListener('click', () => {
+            if (!selectedCell) return;
+            
+            const row = parseInt(selectedCell.dataset.row);
+            const col = parseInt(selectedCell.dataset.col);
+            
+            if (sudokuBoard.board[row][col] !== 0) return;
+            
+            selectedCell.textContent = sudokuBoard.solution[row][col];
+            sudokuBoard.board[row][col] = sudokuBoard.solution[row][col];
+        });
+
+        clearButton.addEventListener('click', () => {
+            updateGrid();
+        });
+
+        themeToggle.addEventListener('click', () => {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', currentTheme);
+            saveSettings();
+        });
+
+        langToggle.addEventListener('click', () => {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            updateUI();
+            saveSettings();
+        });
+
+        helpButton.addEventListener('click', () => {
+            helpModal.style.display = 'block';
+        });
+
+        document.querySelector('.close').addEventListener('click', () => {
+            helpModal.style.display = 'none';
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target === helpModal) {
+                helpModal.style.display = 'none';
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (!selectedCell) return;
+            
+            const row = parseInt(selectedCell.dataset.row);
+            const col = parseInt(selectedCell.dataset.col);
+            
+            if (e.key >= '1' && e.key <= '9') {
+                const num = parseInt(e.key);
+                if (sudokuBoard.isValid(row, col, num)) {
+                    selectedCell.textContent = num;
+                    sudokuBoard.board[row][col] = num;
+                }
+            } else if (e.key === 'Backspace') {
+                selectedCell.textContent = '';
+                sudokuBoard.board[row][col] = 0;
+            } else if (e.key === 'ArrowUp' && row > 0) {
+                document.querySelector(`[data-row="${row-1}"][data-col="${col}"]`).click();
+            } else if (e.key === 'ArrowDown' && row < 8) {
+                document.querySelector(`[data-row="${row+1}"][data-col="${col}"]`).click();
+            } else if (e.key === 'ArrowLeft' && col > 0) {
+                document.querySelector(`[data-row="${row}"][data-col="${col-1}"]`).click();
+            } else if (e.key === 'ArrowRight' && col < 8) {
+                document.querySelector(`[data-row="${row}"][data-col="${col+1}"]`).click();
+            } else if (e.key === ' ') {
+                const nextCell = document.querySelector(`[data-row="${row}"][data-col="${col+1}"]`) ||
+                               document.querySelector(`[data-row="${row+1}"][data-col="0"]`);
+                if (nextCell) nextCell.click();
+            }
+        });
+
+        // 初始化应用
+        init();
+    </script>
+</body>
+</html> 
