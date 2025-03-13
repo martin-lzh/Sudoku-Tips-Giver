@@ -10,6 +10,9 @@ class SudokuBoard {
         this.board = Array(9).fill().map(() => Array(9).fill(0));
         this.solution = null;
         this.initialCells = new Set();  // 存储初始数字的位置
+        this.draftNumbers = Array(9).fill().map(() => 
+            Array(9).fill().map(() => new Set())
+        );  // 存储每个格子的草稿数字
     }
 
     // 检查数字在指定位置是否有效
@@ -107,6 +110,7 @@ class SudokuBoard {
             }
         }
 
+        this.clearAllDraftNumbers();  // 生成新题目时清除所有草稿
         return this.board;
     }
 
@@ -246,6 +250,43 @@ class SudokuBoard {
             [array[i], array[j]] = [array[j], array[i]];
         }
         return array;
+    }
+
+    // 添加草稿数字
+    addDraftNumber(row, col, num) {
+        if (!this.isInitialCell(row, col) && this.board[row][col] === 0) {
+            this.draftNumbers[row][col].add(num);
+        }
+    }
+
+    // 移除草稿数字
+    removeDraftNumber(row, col, num) {
+        this.draftNumbers[row][col].delete(num);
+    }
+
+    // 获取格子的草稿数字
+    getDraftNumbers(row, col) {
+        return Array.from(this.draftNumbers[row][col]);
+    }
+
+    // 清除格子的所有草稿数字
+    clearDraftNumbers(row, col) {
+        this.draftNumbers[row][col].clear();
+    }
+
+    // 清除所有草稿数字
+    clearAllDraftNumbers() {
+        this.draftNumbers = Array(9).fill().map(() => 
+            Array(9).fill().map(() => new Set())
+        );
+    }
+
+    // 重写清空棋盘方法，添加清除草稿的功能
+    clear() {
+        this.board = Array(9).fill().map(() => Array(9).fill(0));
+        this.solution = null;
+        this.initialCells.clear();
+        this.clearAllDraftNumbers();
     }
 }
 

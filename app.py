@@ -7,7 +7,7 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
 
 from flask import Flask, render_template, jsonify, request
 from functions import Board, is_valid
-from sudoku_solver import get_next_hint, solve_sudoku
+from sudoku_solver import get_next_hint, solve_sudoku, has_unique_solution
 import random
 import copy
 from flask_cors import CORS
@@ -15,53 +15,11 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
+board = Board()
+
 @app.route('/')
 def index():
-    return render_template('index.html')
-
-def has_unique_solution(board):
-    """检查数独是否有唯一解"""
-    def solve_with_limit(board, limit=2):
-        solutions = []
-        
-        def solve_recursive(board):
-            if len(solutions) >= limit:
-                return
-            
-            # 找到一个空位置
-            empty = None
-            for i in range(9):
-                for j in range(9):
-                    if board[i][j] == 0:
-                        empty = (i, j)
-                        break
-                if empty:
-                    break
-            
-            # 如果没有空位置，说明找到了一个解
-            if not empty:
-                solutions.append([row[:] for row in board])
-                return
-            
-            row, col = empty
-            # 尝试1-9的数字
-            for num in range(1, 10):
-                if is_valid(board, row, col, num):
-                    board[row][col] = num
-                    solve_recursive(board)
-                    board[row][col] = 0
-                    
-                    # 如果已经找到两个解，可以提前返回
-                    if len(solutions) >= limit:
-                        return
-        
-        board_copy = [row[:] for row in board]
-        solve_recursive(board_copy)
-        return solutions
-    
-    # 寻找最多两个解，如果找到两个就说明不是唯一解
-    solutions = solve_with_limit(board)
-    return len(solutions) == 1
+    return render_template('index.html', title='数独提示器 | Sudoku Tips Giver')
 
 def generate_sudoku(difficulty='medium'):
     # 根据难度设置保留的数字数量范围
@@ -183,14 +141,6 @@ def hint():
         board = Board()
         board.string_to_board(board_str)
         
-        # 先获取完整解
-        solved_board = [row[:] for row in board.board]  # 创建深拷贝
-        if not solve_sudoku(solved_board):
-            return jsonify({
-                'success': False,
-                'message': '这个数独没有解！'
-            })
-        
         # 获取下一步提示
         result = get_next_hint(board.board)
         if result[0] is None:
@@ -198,22 +148,96 @@ def hint():
                 'success': False,
                 'message': result[1]
             })
-        else:
-            row, col, num, message = result
-            return jsonify({
-                'success': True,
-                'row': row,
-                'col': col,
-                'number': num,
-                'message': message,
-                'possible_numbers': [n for n in range(1, 10) if is_valid(board.board, row, col, n)],
-                'solved_board': solved_board  # 返回完整解
-            })
+        
+        row, col, num, message = result
+        
+        # 获取这个位置所有可能的数字
+        possible_numbers = []
+        for n in range(1, 10):
+            if is_valid(board.board, row, col, n):
+                possible_numbers.append(n)
+        
+        # 找到最少可能性的格子
+        min_row, min_col, min_constraint = board.find_constraint()
+        is_minimal = (row == min_row and col == min_col)
+        
+        return jsonify({
+            'success': True,
+            'row': row,
+            'col': col,
+            'number': num,  # 如果只有一个可能的数字，这里会有值
+            'possible_numbers': possible_numbers,
+            'is_minimal': is_minimal,  # 标记是否是最少可能性的格子
+            'message': message
+        })
     except Exception as e:
         return jsonify({
             'success': False,
             'message': f'处理请求时发生错误: {str(e)}'
         })
+
+@app.route('/add_draft', methods=['POST'])
+def add_draft():
+    data = request.get_json()
+    row = data.get('row')
+    col = data.get('col')
+    number = data.get('number')
+    
+    if None in (row, col, number):
+        return jsonify({'success': False, 'error': 'Missing data'}), 400
+    
+    try:
+        board.add_draft_number(row, col, number)
+        draft_numbers = board.get_draft_numbers(row, col)
+        return jsonify({
+            'success': True,
+            'draft_numbers': sorted(list(draft_numbers))
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/remove_draft', methods=['POST'])
+def remove_draft():
+    data = request.get_json()
+    row = data.get('row')
+    col = data.get('col')
+    number = data.get('number')
+    
+    if None in (row, col, number):
+        return jsonify({'success': False, 'error': 'Missing data'}), 400
+    
+    try:
+        board.remove_draft_number(row, col, number)
+        draft_numbers = board.get_draft_numbers(row, col)
+        return jsonify({
+            'success': True,
+            'draft_numbers': sorted(list(draft_numbers))
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/clear_draft', methods=['POST'])
+def clear_draft():
+    data = request.get_json()
+    row = data.get('row')
+    col = data.get('col')
+    
+    if None in (row, col):
+        return jsonify({'success': False, 'error': 'Missing data'}), 400
+    
+    try:
+        board.clear_draft_numbers(row, col)
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/clear_all_drafts', methods=['POST'])
+def clear_all_drafts():
+    try:
+        board.clear_all_draft_numbers()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
 
 if __name__ == '__main__':
     app.run(debug=True) 

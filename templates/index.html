@@ -43,14 +43,17 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             --cell-border: #999;
             --grid-border: #333;
             --grid-bg: #ffffff;
-            --highlight-bg: #e6f3ff;
-            --button-bg: #007bff;
-            --button-hover: #0056b3;
+            --highlight-bg: rgba(76, 175, 80, 0.5);
+            --button-bg: #4CAF50;
+            --button-hover: #45a049;
             --button-text: #ffffff;
             --success-bg: #e6ffe6;
             --success-color: #28a745;
             --error-bg: #ffe6e6;
             --error-color: #dc3545;
+            --highlight-color: #4CAF50;
+            --draft-color: #999999;
+            --draft-color-dark: #666666;
         }
 
         [data-theme="dark"] {
@@ -61,14 +64,17 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             --cell-border: #666;
             --grid-border: #888;
             --grid-bg: #333;
-            --highlight-bg: #1a3f66;
-            --button-bg: #0056b3;
-            --button-hover: #003d80;
+            --highlight-bg: rgba(102, 187, 106, 0.5);
+            --button-bg: #66bb6a;
+            --button-hover: #81c784;
             --button-text: #ffffff;
             --success-bg: #143322;
             --success-color: #28a745;
             --error-bg: #331111;
             --error-color: #dc3545;
+            --highlight-color: #66bb6a;
+            --draft-color: #666666;
+            --draft-color-dark: #999999;
         }
 
         body {
@@ -157,6 +163,7 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             border-radius: calc(var(--cell-size) * 0.2);
             margin: 0 auto;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
         }
 
         .row {
@@ -168,24 +175,55 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             width: var(--cell-size);
             height: var(--cell-size);
             border: 1px solid var(--cell-border);
+            position: relative;
+            transition: all 0.3s ease;
+            background-color: var(--cell-bg);
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: calc(var(--cell-size) * 0.5);
-            cursor: pointer;
-            background-color: var(--cell-bg);
-            transition: all 0.3s ease;
         }
 
-        .cell input {
+        .cell.highlight, .cell.highlighted {
+            background-color: var(--highlight-bg);
+        }
+
+        .cell .main-number {
+            font-size: calc(var(--cell-size) * 0.5);
+            color: var(--text-color);
+            z-index: 2;
+        }
+
+        .cell .draft-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
             width: 100%;
             height: 100%;
-            border: none;
-            text-align: center;
-            font-size: inherit;
-            background: transparent;
-            color: var(--text-color);
-            cursor: pointer;
+            z-index: 1;
+            position: absolute;
+            top: 0;
+            left: 0;
+            padding: 2px;
+            box-sizing: border-box;
+        }
+
+        .cell .draft-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: calc(var(--cell-size) * 0.3);
+            color: var(--draft-color);
+            width: 100%;
+            height: 100%;
+        }
+
+        [data-theme="dark"] .cell .draft-number {
+            color: var(--draft-color-dark);
+        }
+
+        .draft-mode .cell {
+            cursor: crosshair;
         }
 
         .theme-toggle, .lang-toggle, .help-button {
@@ -226,6 +264,25 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
         .theme-toggle {
             right: calc(var(--cell-size) * 2.7);
             width: calc(var(--cell-size) * 0.8);
+        }
+
+        .draft-toggle {
+            position: fixed;
+            top: calc(var(--cell-size) * 0.2);
+            right: calc(var(--cell-size) * 3.7);
+            width: calc(var(--cell-size) * 0.8);
+            height: calc(var(--cell-size) * 0.8);
+            min-width: unset;
+            padding: 0;
+            background-color: var(--button-bg);
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .draft-toggle.active {
+            background-color: var(--button-bg);
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
         @media screen and (max-width: 600px) {
@@ -275,8 +332,7 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             height: 100%;
             background-color: rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(3px);
-            z-index: 100;
-            display: flex;
+            z-index: 10;
             justify-content: center;
             align-items: center;
         }
@@ -327,10 +383,6 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
 
         .cell input:not(:disabled):focus {
             outline: 2px solid var(--button-bg);
-        }
-
-        .cell.highlighted {
-            background-color: var(--highlight-bg);
         }
 
         .grid-line-right {
@@ -430,6 +482,10 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
         .help-content li {
             margin: 10px 0;
         }
+
+        .cell.selected {
+            background-color: var(--highlight-bg);
+        }
     </style>
 </head>
 <body>
@@ -441,6 +497,7 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                 <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
                 <button class="lang-toggle" onclick="toggleLanguage()">中/En</button>
                 <button class="help-button" onclick="toggleHelp()">?</button>
+                <button class="draft-toggle" id="draftToggle">✎</button>
             </div>
         </div>
         <div class="buttons">
@@ -463,10 +520,24 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             <button onclick="showAnswer()" class="lang-en" style="display: none;">Show Answer</button>
             <button onclick="clearBoard()" class="lang-en" style="display: none;">Clear Board</button>
         </div>
-        <div class="sudoku-grid" id="grid">
+        <div class="grid" id="grid">
             <div class="loading-overlay" id="gridLoading" style="display: none;">
                 <div class="loading-spinner"></div>
             </div>
+            {% for i in range(9) %}
+            <div class="row">
+                {% for j in range(9) %}
+                <div class="cell{% if j == 2 or j == 5 %} grid-line-right{% endif %}{% if i == 2 or i == 5 %} grid-line-bottom{% endif %}" data-row="{{ i }}" data-col="{{ j }}">
+                    <div class="main-number"></div>
+                    <div class="draft-grid">
+                        {% for n in range(9) %}
+                        <div class="draft-number"></div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
         </div>
         <div class="message" id="message"></div>
     </div>
@@ -501,11 +572,20 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                     <li>系统会自动检查是否完成</li>
                 </ul>
 
+                <h3>草稿功能</h3>
+                <ul>
+                    <li><strong>✎</strong>：点击切换草稿模式</li>
+                    <li>在草稿模式下，可以在格子中添加多个候选数字</li>
+                    <li>再次点击草稿按钮可退出草稿模式</li>
+                    <li>草稿数字不会影响游戏判定</li>
+                </ul>
+
                 <h3>界面控制</h3>
                 <ul>
                     <li>🌓：切换深色/浅色主题</li>
                     <li>中/En：切换中文/英文界面</li>
                     <li>?：显示/隐藏帮助信息</li>
+                    <li>✎：切换草稿模式</li>
                 </ul>
             </div>
             <div class="lang-en" style="display: none;">
@@ -534,11 +614,20 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                     <li>System automatically checks for completion</li>
                 </ul>
 
+                <h3>Draft Feature</h3>
+                <ul>
+                    <li><strong>✎</strong>: Click to toggle Draft Mode</li>
+                    <li>In Draft Mode, you can add multiple candidate numbers in cells</li>
+                    <li>Click the draft button again to exit Draft Mode</li>
+                    <li>Draft numbers don't affect game validation</li>
+                </ul>
+
                 <h3>Interface Controls</h3>
                 <ul>
                     <li>🌓: Toggle dark/light theme</li>
                     <li>中/En: Switch between Chinese/English</li>
                     <li>?: Show/hide help information</li>
+                    <li>✎: Toggle Draft Mode</li>
                 </ul>
             </div>
         </div>
@@ -560,7 +649,11 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                 incorrect: '数独填写有误，请检查后重试！',
                 error: '发生错误，请重试',
                 inputLocked: '已锁定输入。如需修改，请点击清空棋盘重新开始。',
-                generateError: '生成数独时发生错误'
+                generateError: '生成数独时发生错误',
+                draft: {
+                    enter: "进入草稿模式",
+                    exit: "退出草稿模式"
+                }
             },
             en: {
                 noUniqueSolution: 'This Sudoku has no unique solution!',
@@ -568,7 +661,11 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                 incorrect: 'The Sudoku is incorrect. Please check and try again!',
                 error: 'An error occurred, please try again',
                 inputLocked: 'Input is locked. To modify, please click Clear Board to start over.',
-                generateError: 'Error generating Sudoku'
+                generateError: 'Error generating Sudoku',
+                draft: {
+                    enter: "Enter Draft Mode",
+                    exit: "Exit Draft Mode"
+                }
             }
         };
 
@@ -635,14 +732,15 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
         }
 
         function updateGrid() {
-            const inputs = document.querySelectorAll('#grid input');  // 修改选择器
             board.forEach((row, i) => {
                 row.forEach((value, j) => {
-                    const input = inputs[i * 9 + j];
-                    if (input) {  // 添加检查
-                        input.value = value || '';
-                        input.disabled = isLocked || initialCells.has(`${i},${j}`);
-                        input.className = initialCells.has(`${i},${j}`) ? 'initial' : '';
+                    const cell = document.querySelector(`.cell[data-row="${i}"][data-col="${j}"]`);
+                    if (cell) {
+                        const mainNumber = cell.querySelector('.main-number');
+                        if (mainNumber) {
+                            mainNumber.textContent = value || '';
+                        }
+                        cell.classList.toggle('initial', initialCells.has(`${i},${j}`));
                     }
                 });
             });
@@ -650,11 +748,8 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
 
         async function generateSudoku() {
             try {
-                // 显示加载状态
                 const gridLoading = document.getElementById('gridLoading');
                 const generateButton = document.querySelector(`.lang-${currentLanguage}[onclick="generateSudoku()"]`);
-                
-                // 只禁用游戏相关的按钮和选择框
                 const gameButtons = document.querySelectorAll('.buttons button');
                 const difficultySelects = document.querySelectorAll('#difficulty, #difficulty-en');
                 
@@ -668,7 +763,6 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                         'Generating<span class="button-spinner"></span>';
                 }
 
-                // 只禁用游戏相关的按钮和选择框
                 gameButtons.forEach(btn => btn.disabled = true);
                 difficultySelects.forEach(select => select.disabled = true);
 
@@ -692,6 +786,7 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                     initialCells.clear();
                     isLocked = false;
                     
+                    // 更新初始单元格集合
                     board.forEach((row, i) => {
                         row.forEach((value, j) => {
                             if (value) {
@@ -700,8 +795,11 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                         });
                     });
                     
+                    // 更新网格显示
                     updateGrid();
                     clearHighlight();
+                    
+                    // 清除消息
                     const messageDiv = document.getElementById('message');
                     if (messageDiv) {
                         messageDiv.textContent = '';
@@ -723,13 +821,11 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                     messageDiv.textContent = translations[currentLanguage].generateError + (error.message ? `: ${error.message}` : '');
                 }
             } finally {
-                // 恢复按钮状态
                 const gridLoading = document.getElementById('gridLoading');
                 const generateButton = document.querySelector(`.lang-${currentLanguage}[onclick="generateSudoku()"]`);
                 const gameButtons = document.querySelectorAll('.buttons button');
                 const difficultySelects = document.querySelectorAll('#difficulty, #difficulty-en');
                 
-                // 移除加载状态
                 if (gridLoading) {
                     gridLoading.style.display = 'none';
                 }
@@ -738,7 +834,6 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                     generateButton.innerHTML = currentLanguage === 'zh' ? '生成数独' : 'Generate Sudoku';
                 }
                 
-                // 只启用游戏相关的按钮和选择框
                 gameButtons.forEach(btn => btn.disabled = false);
                 difficultySelects.forEach(select => select.disabled = false);
             }
@@ -898,16 +993,16 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
 
         function highlightCell(row, col) {
             clearHighlight();
-            const input = document.querySelector(`#grid input[data-row="${row}"][data-col="${col}"]`);
-            if (input) {
-                input.parentElement.classList.add('highlighted');
-                highlightedCell = input.parentElement;
+            const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+            if (cell) {
+                cell.classList.add('highlighted');
+                highlightedCell = cell;
             }
         }
 
         async function getHint() {
             try {
-                // 首先检查是否所有格子都已填写
+                // 检查是否所有格子都已填写
                 let isFull = true;
                 for (let i = 0; i < 9; i++) {
                     for (let j = 0; j < 9; j++) {
@@ -922,143 +1017,157 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                 if (isFull) {
                     // 如果已填满，检查是否正确
                     const messageDiv = document.getElementById('message');
-                    clearHighlight(); // 清除高亮
+                    clearHighlight();
                     
-                    // 检查每一行
-                    for (let i = 0; i < 9; i++) {
-                        let row = new Set();
-                        for (let j = 0; j < 9; j++) {
-                            if (row.has(board[i][j])) {
-                                messageDiv.className = 'message error';
-                                messageDiv.textContent = translations[currentLanguage].incorrect;
-                                return;
-                            }
-                            row.add(board[i][j]);
-                        }
-                    }
-                    
-                    // 检查每一列
-                    for (let j = 0; j < 9; j++) {
-                        let col = new Set();
+                    let isCorrect = true;
+                    if (solvedBoard) {
                         for (let i = 0; i < 9; i++) {
-                            if (col.has(board[i][j])) {
-                                messageDiv.className = 'message error';
-                                messageDiv.textContent = translations[currentLanguage].incorrect;
-                                return;
-                            }
-                            col.add(board[i][j]);
-                        }
-                    }
-                    
-                    // 检查每个3x3方格
-                    for (let block = 0; block < 9; block++) {
-                        let square = new Set();
-                        let startRow = Math.floor(block / 3) * 3;
-                        let startCol = (block % 3) * 3;
-                        for (let i = 0; i < 3; i++) {
-                            for (let j = 0; j < 3; j++) {
-                                let num = board[startRow + i][startCol + j];
-                                if (square.has(num)) {
-                                    messageDiv.className = 'message error';
-                                    messageDiv.textContent = translations[currentLanguage].incorrect;
-                                    return;
+                            for (let j = 0; j < 9; j++) {
+                                if (board[i][j] !== solvedBoard[i][j]) {
+                                    isCorrect = false;
+                                    break;
                                 }
-                                square.add(num);
                             }
+                            if (!isCorrect) break;
                         }
+                    } else {
+                        // 如果没有解决方案，检查基本规则
+                        isCorrect = checkBasicRules();
                     }
                     
-                    // 如果所有检查都通过，显示完成消息
-                    messageDiv.className = 'message success';
-                    messageDiv.textContent = translations[currentLanguage].completed;
+                    messageDiv.className = isCorrect ? 'message success' : 'message error';
+                    messageDiv.textContent = isCorrect ? 
+                        translations[currentLanguage].completed : 
+                        translations[currentLanguage].incorrect;
                     return;
                 }
 
+                // 发送请求到服务器获取智能提示
                 const response = await fetch('/get_hint', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ board: board })
+                    body: JSON.stringify({ 
+                        board: board,
+                        solved_board: solvedBoard // 可选，如果有完整解决方案
+                    })
                 });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 
                 const data = await response.json();
                 const messageDiv = document.getElementById('message');
                 
                 if (data.success) {
                     messageDiv.className = 'message success';
-                    messageDiv.textContent = data.message;
-                    messageDiv.dataset.number = data.number;
-                    messageDiv.dataset.possibleNumbers = JSON.stringify(data.possible_numbers);
-                    solvedBoard = data.solved_board;  // 保存完整解
-                    highlightCell(data.row, data.col);
+                    if (data.row !== undefined && data.col !== undefined) {
+                        highlightCell(data.row, data.col);
+                        
+                        // 如果找到唯一可能的数字
+                        if (data.number) {
+                            messageDiv.textContent = currentLanguage === 'zh' ? 
+                                `第${data.row + 1}行第${data.col + 1}列只能填入数字${data.number}` :
+                                `Row ${data.row + 1}, Column ${data.col + 1} can only be filled with number ${data.number}`;
+                        } 
+                        // 如果有多个可能的数字
+                        else if (data.possible_numbers && data.possible_numbers.length > 0) {
+                            // 如果这是最少可能性的格子
+                            if (data.is_minimal) {
+                                messageDiv.textContent = currentLanguage === 'zh' ? 
+                                    `提示：第${data.row + 1}行第${data.col + 1}列是可能性最少的格子，可以填入的数字有：${data.possible_numbers.join(', ')}` :
+                                    `Hint: Row ${data.row + 1}, Column ${data.col + 1} has the least possibilities: ${data.possible_numbers.join(', ')}`;
+                            } else {
+                                messageDiv.textContent = currentLanguage === 'zh' ? 
+                                    `第${data.row + 1}行第${data.col + 1}列可以填入的数字有：${data.possible_numbers.join(', ')}` :
+                                    `Row ${data.row + 1}, Column ${data.col + 1} possible numbers are: ${data.possible_numbers.join(', ')}`;
+                            }
+                        }
+                    }
                 } else {
                     messageDiv.className = 'message error';
-                    messageDiv.textContent = currentLanguage === 'zh' ? 
-                        translations.zh.noUniqueSolution : 
-                        translations.en.noUniqueSolution;
-                    messageDiv.dataset.number = '';
-                    messageDiv.dataset.possibleNumbers = '';
-                    solvedBoard = null;
+                    messageDiv.textContent = data.message || translations[currentLanguage].noUniqueSolution;
                     clearHighlight();
-                }
-                
-                if (currentLanguage === 'en') {
-                    translateMessage(messageDiv);
                 }
             } catch (error) {
                 console.error('Error:', error);
                 const messageDiv = document.getElementById('message');
                 messageDiv.className = 'message error';
-                messageDiv.textContent = currentLanguage === 'zh' ? 
-                    translations.zh.error : 
-                    translations.en.error;
+                messageDiv.textContent = translations[currentLanguage].error;
             }
         }
 
-        async function showAnswer() {
-            // 检查是否所有格子都已填写
-            let isFull = true;
+        // 检查数独基本规则
+        function checkBasicRules() {
+            // 检查行
             for (let i = 0; i < 9; i++) {
+                let row = new Set();
                 for (let j = 0; j < 9; j++) {
-                    if (board[i][j] === 0) {
-                        isFull = false;
-                        break;
+                    if (row.has(board[i][j])) return false;
+                    row.add(board[i][j]);
+                }
+            }
+            
+            // 检查列
+            for (let j = 0; j < 9; j++) {
+                let col = new Set();
+                for (let i = 0; i < 9; i++) {
+                    if (col.has(board[i][j])) return false;
+                    col.add(board[i][j]);
+                }
+            }
+            
+            // 检查3x3方格
+            for (let block = 0; block < 9; block++) {
+                let square = new Set();
+                let startRow = Math.floor(block / 3) * 3;
+                let startCol = (block % 3) * 3;
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        let num = board[startRow + i][startCol + j];
+                        if (square.has(num)) return false;
+                        square.add(num);
                     }
                 }
-                if (!isFull) break;
             }
+            
+            return true;
+        }
 
-            if (isFull) {
-                await getHint();  // 如果已填满，调用getHint检查是否正确
+        async function showAnswer() {
+            if (!highlightedCell) {
+                await getHint();
                 return;
             }
 
-            const messageDiv = document.getElementById('message');
+            const row = parseInt(highlightedCell.dataset.row);
+            const col = parseInt(highlightedCell.dataset.col);
             
-            if (!highlightedCell || !messageDiv.className.includes('success')) {
+            if (solvedBoard && solvedBoard[row] && solvedBoard[row][col]) {
+                const number = solvedBoard[row][col];
+                board[row][col] = number;
+                updateGrid();
+                
+                // 标记为初始单元格
+                initialCells.add(`${row},${col}`);
+                
+                // 清除该单元格的草稿数字
+                await fetch('/clear_draft', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        row: row,
+                        col: col,
+                        board: board
+                    })
+                });
+                
+                // 寻找下一个需要提示的单元格
                 await getHint();
-                if (!messageDiv.className.includes('success')) {
-                    return;
-                }
-            }
-            
-            if (solvedBoard && highlightedCell) {
-                const input = highlightedCell.querySelector('input');
-                if (input) {
-                    const row = parseInt(input.dataset.row);
-                    const col = parseInt(input.dataset.col);
-                    const number = solvedBoard[row][col];
-                    if (number) {
-                        input.value = number;
-                        board[row][col] = number;
-                        initialCells.add(`${row},${col}`);  // 将填写的格子标记为初始格子
-                        updateGrid();  // 更新网格以应用禁用状态
-                        
-                        // 使用getHint来寻找下一个需要提示的格子
-                        await getHint();
-                    }
-                }
             }
         }
 
@@ -1174,9 +1283,189 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             }
         }
 
-        // 初始化设置和棋盘
-        initializeSettings();
-        createGrid();
+        // 全局变量
+        let currentLang = 'zh';
+        let isDraftMode = false;
+        let selectedCell = null;
+
+        // DOM 元素
+        const draftToggle = document.getElementById('draftToggle');
+        const messageDiv = document.getElementById('message');
+        const grid = document.querySelector('.grid');
+
+        // 初始化函数
+        function initializeGame() {
+            // ... existing initialization code ...
+            
+            // 设置草稿模式按钮
+            draftToggle.title = translations[currentLang].draft.enter;
+            
+            // 初始化格子事件监听器
+            initializeCellListeners();
+        }
+
+        // 切换草稿模式
+        draftToggle.addEventListener('click', () => {
+            isDraftMode = !isDraftMode;
+            document.body.classList.toggle('draft-mode', isDraftMode);
+            draftToggle.classList.toggle('active', isDraftMode);
+            draftToggle.title = translations[currentLang].draft[isDraftMode ? 'exit' : 'enter'];
+            
+            // 显示草稿模式状态提示
+            showMessage(
+                currentLang === 'zh' ? 
+                    (isDraftMode ? '已进入草稿模式，可以在格子中添加多个数字' : '已退出草稿模式') :
+                    (isDraftMode ? 'Entered Draft Mode, you can add multiple numbers in cells' : 'Exited Draft Mode'),
+                'success'
+            );
+        });
+
+        // 处理键盘输入
+        document.addEventListener('keydown', async (e) => {
+            if (!selectedCell) return;
+            
+            const row = parseInt(selectedCell.dataset.row);
+            const col = parseInt(selectedCell.dataset.col);
+            
+            if (e.key >= '1' && e.key <= '9') {
+                const num = parseInt(e.key);
+                if (isDraftMode) {
+                    // 在草稿模式下处理输入
+                    if (!isInitialCell(row, col)) {
+                        const response = await fetch('/add_draft', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                row: row,
+                                col: col,
+                                number: num,
+                                board: board
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success) {
+                                updateDraftNumbers(row, col, data.draft_numbers);
+                            }
+                        }
+                    }
+                } else {
+                    // 在正常模式下处理输入
+                    if (!isInitialCell(row, col)) {
+                        board[row][col] = num;
+                        // 清除该格子的草稿数字
+                        await fetch('/clear_draft', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                row: row,
+                                col: col,
+                                board: board
+                            })
+                        });
+                        updateCell(row, col);
+                    }
+                }
+            } else if (e.key === 'Backspace' || e.key === 'Delete') {
+                if (!isInitialCell(row, col)) {
+                    if (isDraftMode) {
+                        // 在草稿模式下清除所有草稿数字
+                        const response = await fetch('/clear_draft', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                row: row,
+                                col: col,
+                                board: board
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            updateDraftNumbers(row, col, []);
+                        }
+                    } else {
+                        // 在正常模式下清除数字
+                        board[row][col] = 0;
+                        updateCell(row, col);
+                    }
+                }
+            }
+        });
+
+        // 更新草稿数字显示
+        function updateDraftNumbers(row, col, numbers) {
+            const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+            if (cell) {
+                const draftCells = cell.querySelectorAll('.draft-number');
+                draftCells.forEach((draftCell, index) => {
+                    draftCell.textContent = numbers.includes(index + 1) ? (index + 1) : '';
+                });
+            }
+        }
+
+        // 更新单个格子显示
+        function updateCell(row, col) {
+            const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+            if (cell) {
+                const mainNumber = cell.querySelector('.main-number');
+                mainNumber.textContent = board[row][col] || '';
+            }
+        }
+
+        // 检查是否为初始格子
+        function isInitialCell(row, col) {
+            return initialCells.has(`${row},${col}`);
+        }
+
+        // 显示消息
+        function showMessage(text, type = 'info') {
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            setTimeout(() => {
+                messageDiv.className = 'message';
+                messageDiv.textContent = '';
+            }, 3000);
+        }
+
+        // 添加单元格点击事件
+        document.addEventListener('DOMContentLoaded', () => {
+            const grid = document.getElementById('grid');
+            if (grid) {
+                grid.addEventListener('click', (e) => {
+                    const cell = e.target.closest('.cell');
+                    if (cell) {
+                        // 移除之前选中的单元格高亮
+                        const previousSelected = document.querySelector('.cell.selected');
+                        if (previousSelected) {
+                            previousSelected.classList.remove('selected');
+                        }
+                        
+                        // 高亮当前选中的单元格
+                        cell.classList.add('selected');
+                        selectedCell = cell;
+                    }
+                });
+            }
+        });
+
+        // 添加选中单元格的样式
+        const styleSheet = document.createElement('style');
+        styleSheet.textContent = `
+            .cell.selected {
+                background-color: var(--highlight-bg);
+            }
+        `;
+        document.head.appendChild(styleSheet);
+
+        // 初始化
+        initializeGame();
     </script>
 </body>
 </html> 

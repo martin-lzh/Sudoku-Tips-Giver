@@ -160,6 +160,8 @@ class Board:
             self.board = [[0 for _ in range(9)] for _ in range(9)]
         else:
             self.board = board
+        self.initial_cells = set()  # 存储初始数字的位置
+        self.draft_numbers = [[set() for _ in range(9)] for _ in range(9)]  # 存储草稿数字
 
     def __iter__(self):
         """
@@ -183,6 +185,8 @@ class Board:
         col = int(col - 1)
         if is_valid(self.board, row, col, num):
             self.board[row][col] = num
+            # 清除该格子的所有草稿数字
+            self.clear_draft_numbers(row, col)
             print("Number on row", row+1, "col", col+1, "added successfully!")
         elif self.board[row][col] == num:
             print("Number already exists in the cell!")
@@ -254,4 +258,62 @@ class Board:
             str: A string of length 81 representing the Sudoku board, where each character is a digit from 0-9.
         """
         return board_to_string(self.board)
+
+    def add_draft_number(self, row, col, num):
+        """
+        在指定位置添加草稿数字
+        Args:
+            row (int): 行索引 (0-8)
+            col (int): 列索引 (0-8)
+            num (int): 要添加的数字 (1-9)
+        """
+        if not self.is_initial_cell(row, col) and self.board[row][col] == 0:
+            self.draft_numbers[row][col].add(num)
+
+    def remove_draft_number(self, row, col, num):
+        """
+        从指定位置移除草稿数字
+        Args:
+            row (int): 行索引 (0-8)
+            col (int): 列索引 (0-8)
+            num (int): 要移除的数字 (1-9)
+        """
+        self.draft_numbers[row][col].discard(num)
+
+    def get_draft_numbers(self, row, col):
+        """
+        获取指定位置的草稿数字
+        Args:
+            row (int): 行索引 (0-8)
+            col (int): 列索引 (0-8)
+        Returns:
+            list: 该位置的草稿数字列表
+        """
+        return sorted(list(self.draft_numbers[row][col]))
+
+    def clear_draft_numbers(self, row, col):
+        """
+        清除指定位置的所有草稿数字
+        Args:
+            row (int): 行索引 (0-8)
+            col (int): 列索引 (0-8)
+        """
+        self.draft_numbers[row][col].clear()
+
+    def clear_all_draft_numbers(self):
+        """
+        清除所有格子的草稿数字
+        """
+        self.draft_numbers = [[set() for _ in range(9)] for _ in range(9)]
+
+    def is_initial_cell(self, row, col):
+        """
+        检查指定位置是否为初始数字
+        Args:
+            row (int): 行索引 (0-8)
+            col (int): 列索引 (0-8)
+        Returns:
+            bool: 如果是初始数字返回 True，否则返回 False
+        """
+        return f"{row},{col}" in self.initial_cells
 

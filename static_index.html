@@ -21,7 +21,9 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             --button-bg: #4CAF50;
             --button-text: #ffffff;
             --button-hover: #45a049;
-            --cell-size: 40px;
+            --cell-size: min(40px, calc(90vw / 11));
+            --draft-color: #999999;
+            --draft-color-dark: #666666;
         }
 
         [data-theme="dark"] {
@@ -33,6 +35,8 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             --button-bg: #66bb6a;
             --button-text: #ffffff;
             --button-hover: #81c784;
+            --draft-color: #666666;
+            --draft-color-dark: #999999;
         }
 
         body {
@@ -116,59 +120,126 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
         }
 
         .cell {
-            width: 40px;
-            height: 40px;
+            width: var(--cell-size);
+            height: var(--cell-size);
             border: 1px solid var(--cell-border);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: calc(var(--cell-size) * 0.5);
             cursor: pointer;
             background-color: var(--bg-color);
+            position: relative;
+            transition: all 0.3s ease;
         }
 
-        .cell:nth-child(3n) {
-            border-right: 2px solid var(--cell-border);
-        }
-
-        .row:nth-child(3n) .cell {
+        /* 添加3x3区域的边框 */
+        .row:nth-child(3) .cell,
+        .row:nth-child(6) .cell {
             border-bottom: 2px solid var(--cell-border);
+        }
+
+        .cell:nth-child(3),
+        .cell:nth-child(6) {
+            border-right: 2px solid var(--cell-border);
         }
 
         .cell.highlight {
             background-color: var(--highlight-color);
-            color: var(--button-text);
+            opacity: 0.8;
         }
 
-        .cell.initial {
-            font-weight: bold;
-        }
-
-        .theme-toggle, .lang-toggle, .help-button {
-            position: fixed;
-            top: 10px;
-            height: 36px;
-            min-width: unset;
-            padding: 0;
+        .cell .main-number {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            font-size: calc(var(--cell-size) * 0.6);
+            z-index: 2;
+            user-select: none;
+        }
+
+        .cell .draft-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            position: absolute;
+            top: 0;
+            left: 0;
+            padding: 2px;
+            box-sizing: border-box;
+        }
+
+        .cell .draft-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: calc(var(--cell-size) * 0.3);
+            color: var(--draft-color);
+            width: 100%;
+            height: 100%;
+        }
+
+        [data-theme="dark"] .cell .draft-number {
+            color: var(--draft-color-dark);
+        }
+
+        .draft-mode .cell {
+            cursor: crosshair;
         }
 
         .help-button {
+            position: fixed;
+            top: 10px;
             right: 10px;
             width: 36px;
+            height: 36px;
+            min-width: unset;
+            padding: 0;
         }
 
         .lang-toggle {
+            position: fixed;
+            top: 10px;
             right: 56px;
             width: 60px;
+            height: 36px;
+            min-width: unset;
+            padding: 0;
         }
 
         .theme-toggle {
+            position: fixed;
+            top: 10px;
             right: 126px;
             width: 36px;
+            height: 36px;
+            min-width: unset;
+            padding: 0;
+        }
+
+        .draft-toggle {
+            position: fixed;
+            top: 10px;
+            right: 172px;
+            width: 36px;
+            height: 36px;
+            min-width: unset;
+            padding: 0;
+            background-color: var(--button-bg);
+            transition: all 0.3s ease;
+        }
+
+        .draft-toggle.active {
+            background-color: var(--highlight-color);
+            transform: scale(1.1);
         }
 
         @media (max-width: 600px) {
@@ -189,6 +260,13 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             .theme-toggle {
                 right: 97px;
                 width: 32px;
+            }
+
+            .draft-toggle {
+                right: 152px;
+                width: 32px;
+                height: 32px;
+                font-size: 18px;
             }
         }
 
@@ -211,6 +289,13 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                 right: 82px;
                 width: 28px;
             }
+
+            .draft-toggle {
+                right: 130px;
+                width: 28px;
+                height: 28px;
+                font-size: 16px;
+            }
         }
 
         .modal {
@@ -224,15 +309,23 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             z-index: 1000;
         }
 
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         .modal-content {
             position: relative;
             background-color: var(--bg-color);
-            margin: 10% auto;
             padding: 20px;
             width: 80%;
             max-width: 600px;
             border-radius: 8px;
             color: var(--text-color);
+            margin: 0;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .close {
@@ -300,6 +393,7 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
     <button class="theme-toggle" id="themeToggle">🌓</button>
     <button class="lang-toggle" id="langToggle">中/En</button>
     <button class="help-button" id="helpButton">?</button>
+    <button class="draft-toggle" id="draftToggle">✎</button>
 
     <div id="helpModal" class="modal">
         <div class="modal-content">
@@ -337,7 +431,11 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                     interface: "Interface Controls"
                 },
                 completed: "Congratulations! You've completed the puzzle!",
-                incorrect: "Sorry, the puzzle is not completed correctly."
+                incorrect: "Sorry, the puzzle is not completed correctly.",
+                draft: {
+                    enter: "Enter Draft Mode",
+                    exit: "Exit Draft Mode"
+                }
             },
             zh: {
                 title: "数独提示器",
@@ -358,16 +456,21 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                     interface: "界面控制"
                 },
                 completed: "恭喜！你已经完成了数独！",
-                incorrect: "抱歉，数独没有正确完成。"
+                incorrect: "抱歉，数独没有正确完成。",
+                draft: {
+                    enter: "进入草稿模式",
+                    exit: "退出草稿模式"
+                }
             }
         };
 
         // 全局变量
         let currentLang = 'zh';
         let currentTheme = 'light';
+        let isDraftMode = false;
         let sudokuBoard = new SudokuBoard();
         let selectedCell = null;
-        let lastSavedBoard = null;  // 添加变量存储上次保存的棋盘状态
+        let lastSavedBoard = null;
 
         // DOM 元素
         const grid = document.getElementById('grid');
@@ -383,6 +486,7 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
         const helpContent = document.getElementById('helpContent');
         const loadingOverlay = document.getElementById('loadingOverlay');
         const messageDiv = document.getElementById('message');
+        const draftToggle = document.getElementById('draftToggle');
 
         // 初始化
         function init() {
@@ -402,6 +506,23 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                     cell.className = 'cell';
                     cell.dataset.row = i;
                     cell.dataset.col = j;
+                    
+                    // 添加主数字容器
+                    const mainNumber = document.createElement('div');
+                    mainNumber.className = 'main-number';
+                    cell.appendChild(mainNumber);
+                    
+                    // 添加草稿数字网格
+                    const draftGrid = document.createElement('div');
+                    draftGrid.className = 'draft-grid';
+                    for (let k = 0; k < 9; k++) {
+                        const draftCell = document.createElement('div');
+                        draftCell.className = 'draft-number';
+                        draftCell.dataset.value = k + 1;
+                        draftGrid.appendChild(draftCell);
+                    }
+                    cell.appendChild(draftGrid);
+                    
                     cell.addEventListener('click', () => selectCell(cell));
                     row.appendChild(cell);
                 }
@@ -469,11 +590,19 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                     <li>${currentLang === 'zh' ? '按退格键清除当前格子' : 'Press Backspace to clear current cell'}</li>
                     <li>${currentLang === 'zh' ? '系统会自动检查是否完成' : 'System automatically checks for completion'}</li>
                 </ul>
+                <h3>${currentLang === 'zh' ? '草稿功能' : 'Draft Feature'}</h3>
+                <ul>
+                    <li><strong>✎</strong>: ${currentLang === 'zh' ? '点击切换草稿模式' : 'Click to toggle Draft Mode'}</li>
+                    <li>${currentLang === 'zh' ? '在草稿模式下，可以在格子中添加多个候选数字' : 'In Draft Mode, you can add multiple candidate numbers in cells'}</li>
+                    <li>${currentLang === 'zh' ? '再次点击草稿按钮可退出草稿模式' : 'Click the draft button again to exit Draft Mode'}</li>
+                    <li>${currentLang === 'zh' ? '草稿数字不会影响游戏判定' : 'Draft numbers don\'t affect game validation'}</li>
+                </ul>
                 <h3>${t.interface}</h3>
                 <ul>
                     <li>🌓: ${currentLang === 'zh' ? '切换深色/浅色主题' : 'Toggle dark/light theme'}</li>
                     <li>中/En: ${currentLang === 'zh' ? '切换中文/英文界面' : 'Switch between Chinese/English'}</li>
                     <li>?: ${currentLang === 'zh' ? '显示/隐藏帮助信息' : 'Show/hide help information'}</li>
+                    <li>✎: ${currentLang === 'zh' ? '切换草稿模式' : 'Toggle Draft Mode'}</li>
                 </ul>
             `;
         }
@@ -484,13 +613,17 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             const savedTheme = localStorage.getItem('theme');
             const savedBoard = localStorage.getItem('sudokuBoard');
             const savedSolution = localStorage.getItem('sudokuSolution');
+            const savedDraftNumbers = localStorage.getItem('draftNumbers');
             
             if (savedLang) currentLang = savedLang;
             if (savedTheme) currentTheme = savedTheme;
             if (savedBoard && savedSolution) {
                 sudokuBoard.board = JSON.parse(savedBoard);
                 sudokuBoard.solution = JSON.parse(savedSolution);
-                lastSavedBoard = JSON.parse(savedBoard);
+                if (savedDraftNumbers) {
+                    sudokuBoard.draftNumbers = JSON.parse(savedDraftNumbers);
+                }
+                lastSavedBoard = JSON.parse(savedBoard); // 深拷贝
                 updateGrid();
             }
             
@@ -501,12 +634,17 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
         function saveSettings() {
             localStorage.setItem('language', currentLang);
             localStorage.setItem('theme', currentTheme);
-            // 只有当棋盘状态发生变化时才保存
+            
+            // 保存当前状态，包括草稿数字
             const currentBoard = JSON.stringify(sudokuBoard.board);
+            const currentDraftNumbers = JSON.stringify(sudokuBoard.draftNumbers || {});
+            
+            // 只有当棋盘状态发生变化时才保存
             if (currentBoard !== JSON.stringify(lastSavedBoard)) {
                 localStorage.setItem('sudokuBoard', currentBoard);
                 localStorage.setItem('sudokuSolution', JSON.stringify(sudokuBoard.solution));
-                lastSavedBoard = sudokuBoard.board;
+                localStorage.setItem('draftNumbers', currentDraftNumbers);
+                lastSavedBoard = JSON.parse(currentBoard); // 深拷贝
             }
         }
 
@@ -531,9 +669,17 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                 const row = parseInt(cell.dataset.row);
                 const col = parseInt(cell.dataset.col);
                 const value = sudokuBoard.board[row][col];
+                const mainNumber = cell.querySelector('.main-number');
                 
-                cell.textContent = value || '';
+                mainNumber.textContent = value || '';
                 cell.classList.toggle('initial', sudokuBoard.isInitialCell(row, col));
+                
+                // 更新草稿数字
+                const draftNumbers = sudokuBoard.getDraftNumbers?.(row, col) || [];
+                const draftCells = cell.querySelectorAll('.draft-number');
+                draftCells.forEach((draftCell, index) => {
+                    draftCell.textContent = draftNumbers.includes(index + 1) ? (index + 1) : '';
+                });
             });
             saveSettings();
         }
@@ -576,30 +722,48 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
 
         // 答案按钮点击事件
         answerButton.addEventListener('click', async () => {
-            const hint = sudokuBoard.getHint();
-            if (hint && hint.value) {
-                const cell = document.querySelector(`[data-row="${hint.row}"][data-col="${hint.col}"]`);
-                if (cell) {
-                    cell.textContent = hint.value;
-                    sudokuBoard.board[hint.row][hint.col] = hint.value;
-                    saveSettings();
-                    
-                    // 获取下一个提示
-                    const nextHint = sudokuBoard.getHint();
-                    if (nextHint) {
-                        highlightCell(nextHint.row, nextHint.col);
-                        messageDiv.className = 'message success';
-                        const possibleCount = nextHint.possibleNumbers.length;
-                        messageDiv.textContent = currentLang === 'zh' ? 
-                            `下一步：第${nextHint.row + 1}行第${nextHint.col + 1}列${possibleCount === 1 ? 
-                                `只能填入数字 ${nextHint.possibleNumbers[0]}` : 
-                                `可以填入的数字有: ${nextHint.possibleNumbers.join(', ')}`}` :
-                            `Next: Row ${nextHint.row + 1}, Column ${nextHint.col + 1} ${possibleCount === 1 ? 
-                                `can only be filled with ${nextHint.possibleNumbers[0]}` : 
-                                `can be filled with: ${nextHint.possibleNumbers.join(', ')}`}`;
-                    } else {
-                        checkCompletion();
-                    }
+            if (!selectedCell) {
+                // 如果没有选中的格子，则获取提示
+                const hint = sudokuBoard.getHint();
+                if (hint) {
+                    highlightCell(hint.row, hint.col);
+                }
+                return;
+            }
+
+            const row = parseInt(selectedCell.dataset.row);
+            const col = parseInt(selectedCell.dataset.col);
+
+            // 如果是初始数字，不做任何操作
+            if (sudokuBoard.isInitialCell(row, col)) {
+                return;
+            }
+
+            // 获取当前高亮格子的正确答案
+            const solution = sudokuBoard.solution[row][col];
+            if (solution) {
+                const mainNumber = selectedCell.querySelector('.main-number');
+                mainNumber.textContent = solution;
+                sudokuBoard.board[row][col] = solution;
+                // 清除该格子的所有草稿数字
+                sudokuBoard.clearDraftNumbers(row, col);
+                saveSettings();
+
+                // 获取下一个提示
+                const nextHint = sudokuBoard.getHint();
+                if (nextHint) {
+                    highlightCell(nextHint.row, nextHint.col);
+                    messageDiv.className = 'message success';
+                    const possibleCount = nextHint.possibleNumbers.length;
+                    messageDiv.textContent = currentLang === 'zh' ? 
+                        `下一步：第${nextHint.row + 1}行第${nextHint.col + 1}列${possibleCount === 1 ? 
+                            `只能填入数字 ${nextHint.possibleNumbers[0]}` : 
+                            `可以填入的数字有: ${nextHint.possibleNumbers.join(', ')}`}` :
+                        `Next: Row ${nextHint.row + 1}, Column ${nextHint.col + 1} ${possibleCount === 1 ? 
+                            `can only be filled with ${nextHint.possibleNumbers[0]}` : 
+                            `can be filled with: ${nextHint.possibleNumbers.join(', ')}`}`;
+                } else {
+                    checkCompletion();
                 }
             }
         });
@@ -629,16 +793,16 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
         });
 
         helpButton.addEventListener('click', () => {
-            helpModal.style.display = 'block';
+            helpModal.classList.add('show');
         });
 
         document.querySelector('.close').addEventListener('click', () => {
-            helpModal.style.display = 'none';
+            helpModal.classList.remove('show');
         });
 
         window.addEventListener('click', (e) => {
             if (e.target === helpModal) {
-                helpModal.style.display = 'none';
+                helpModal.classList.remove('show');
             }
         });
 
@@ -650,15 +814,37 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             
             if (e.key >= '1' && e.key <= '9') {
                 const num = parseInt(e.key);
-                if (sudokuBoard.isValid(row, col, num)) {
-                    selectedCell.textContent = num;
-                    sudokuBoard.board[row][col] = num;
-                    saveSettings();  // 输入数字后保存状态
+                if (isDraftMode) {
+                    // 在草稿模式下处理输入
+                    if (!sudokuBoard.isInitialCell(row, col)) {
+                        const draftNumbers = sudokuBoard.getDraftNumbers?.(row, col) || [];
+                        if (draftNumbers.includes(num)) {
+                            sudokuBoard.removeDraftNumber(row, col, num);
+                        } else {
+                            sudokuBoard.addDraftNumber(row, col, num);
+                        }
+                        updateGrid();
+                    }
+                } else {
+                    // 在正常模式下处理输入
+                    if (!sudokuBoard.isInitialCell(row, col) && sudokuBoard.isValid(row, col, num)) {
+                        sudokuBoard.board[row][col] = num;
+                        // 清除该格子的所有草稿数字
+                        sudokuBoard.clearDraftNumbers(row, col);
+                        updateGrid();
+                    }
                 }
             } else if (e.key === 'Backspace') {
-                selectedCell.textContent = '';
-                sudokuBoard.board[row][col] = 0;
-                saveSettings();  // 删除数字后保存状态
+                if (!sudokuBoard.isInitialCell(row, col)) {
+                    if (isDraftMode) {
+                        // 在草稿模式下清除所有草稿数字
+                        sudokuBoard.clearDraftNumbers(row, col);
+                    } else {
+                        // 在正常模式下清除数字
+                        sudokuBoard.board[row][col] = 0;
+                    }
+                    updateGrid();
+                }
             } else if (e.key === 'ArrowUp' && row > 0) {
                 document.querySelector(`[data-row="${row-1}"][data-col="${col}"]`).click();
             } else if (e.key === 'ArrowDown' && row < 8) {
@@ -761,6 +947,20 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                 }
             }
         }
+
+        // 切换草稿模式
+        draftToggle.addEventListener('click', () => {
+            isDraftMode = !isDraftMode;
+            document.body.classList.toggle('draft-mode', isDraftMode);
+            draftToggle.classList.toggle('active', isDraftMode);
+            draftToggle.title = translations[currentLang].draft[isDraftMode ? 'exit' : 'enter'];
+            
+            // 显示草稿模式状态提示
+            messageDiv.textContent = currentLang === 'zh' ? 
+                (isDraftMode ? '已进入草稿模式，可以在格子中添加多个数字' : '已退出草稿模式') :
+                (isDraftMode ? 'Entered Draft Mode, you can add multiple numbers in cells' : 'Exited Draft Mode');
+            messageDiv.className = 'message success';
+        });
 
         // 初始化应用
         init();

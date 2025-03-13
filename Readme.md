@@ -16,6 +16,13 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
   - Shows possible numbers | 显示可能数字
   - Highlights the most logical next move | 高亮显示最合理的下一步
 
+- **Draft Mode | 草稿模式**
+  - Toggle draft mode with pencil icon | 使用铅笔图标切换草稿模式
+  - Add multiple candidate numbers in cells | 在格子中添加多个候选数字
+  - Easy to switch between normal and draft mode | 普通模式和草稿模式之间轻松切换
+  - Draft numbers don't affect game validation | 草稿数字不影响游戏判定
+  - Auto-saves draft numbers | 自动保存草稿数字
+
 - **Interactive Interface | 交互式界面**
   - Clean and modern design | 简洁现代的设计
   - Dark/Light theme support | 深色/浅色主题支持

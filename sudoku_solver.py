@@ -80,6 +80,50 @@ def count_solutions(board, limit=2):
     solve_recursive(board_copy)
     return len(solutions)
 
+def has_unique_solution(board):
+    """检查数独是否有唯一解"""
+    def solve_with_limit(board, limit=2):
+        solutions = []
+        
+        def solve_recursive(board):
+            if len(solutions) >= limit:
+                return
+            
+            # 找到一个空位置
+            empty = None
+            for i in range(9):
+                for j in range(9):
+                    if board[i][j] == 0:
+                        empty = (i, j)
+                        break
+                if empty:
+                    break
+            
+            # 如果没有空位置，说明找到了一个解
+            if not empty:
+                solutions.append([row[:] for row in board])
+                return
+            
+            row, col = empty
+            # 尝试1-9的数字
+            for num in range(1, 10):
+                if is_valid(board, row, col, num):
+                    board[row][col] = num
+                    solve_recursive(board)
+                    board[row][col] = 0
+                    
+                    # 如果已经找到两个解，可以提前返回
+                    if len(solutions) >= limit:
+                        return
+        
+        board_copy = [row[:] for row in board]
+        solve_recursive(board_copy)
+        return solutions
+    
+    # 寻找最多两个解，如果找到两个就说明不是唯一解
+    solutions = solve_with_limit(board)
+    return len(solutions) == 1
+
 def get_next_hint(board):
     """
     获取下一步最佳提示
@@ -89,7 +133,7 @@ def get_next_hint(board):
         tuple: (row, col, num, message) 或 None
     """
     # 首先检查是否有唯一解
-    if count_solutions(board) != 1:
+    if not has_unique_solution(board):
         return None, "这个数独没有唯一解！"
     
     # 找到约束最多的空格
