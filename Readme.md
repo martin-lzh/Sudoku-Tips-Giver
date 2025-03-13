@@ -32,7 +32,7 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
 
 ## Live Demo | 在线演示
 
-[Try it online](https://your-username.github.io/sudoku-tips-giver) | [在线体验](https://your-username.github.io/sudoku-tips-giver)
+[Try it online](https://martin-lzh.github.io/Sudoku-Tips-Giver/) | [在线体验](https://martin-lzh.github.io/Sudoku-Tips-Giver/)
 
 ## Deployment Options | 部署选项
 
