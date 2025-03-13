@@ -722,12 +722,14 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                     const state = JSON.parse(savedState);
                     sudokuBoard = new SudokuBoard(state);
                     lastSavedBoard = JSON.parse(JSON.stringify(state.board)); // 深拷贝
+                    localStorage.setItem('lastSavedDrafts', JSON.stringify(state.draftNumbers));
                     updateGrid();
                 } catch (error) {
                     console.error('Error loading saved state:', error);
                     // 如果加载失败，创建新的数独板
                     sudokuBoard = new SudokuBoard();
                     lastSavedBoard = null;
+                    localStorage.removeItem('lastSavedDrafts');
                 }
             }
             
@@ -747,10 +749,16 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                 // 保存当前状态
                 const currentState = sudokuBoard.toJSON();
                 const currentBoard = JSON.stringify(currentState.board);
+                const currentDrafts = JSON.stringify(currentState.draftNumbers);
                 
-                // 只有当棋盘状态发生变化时才保存
-                if (!lastSavedBoard || currentBoard !== JSON.stringify(lastSavedBoard)) {
+                // 检查棋盘或草稿是否发生变化
+                const shouldSave = !lastSavedBoard || 
+                    currentBoard !== JSON.stringify(lastSavedBoard) ||
+                    currentDrafts !== localStorage.getItem('lastSavedDrafts');
+                
+                if (shouldSave) {
                     localStorage.setItem('sudokuState', JSON.stringify(currentState));
+                    localStorage.setItem('lastSavedDrafts', currentDrafts);
                     lastSavedBoard = JSON.parse(currentBoard); // 深拷贝
                 }
             } catch (error) {
