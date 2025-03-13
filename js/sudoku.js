@@ -6,13 +6,50 @@
  */
 
 class SudokuBoard {
-    constructor() {
-        this.board = Array(9).fill().map(() => Array(9).fill(0));
-        this.solution = null;
-        this.initialCells = new Set();  // 存储初始数字的位置
-        this.draftNumbers = Array(9).fill().map(() => 
-            Array(9).fill().map(() => new Set())
-        );  // 存储每个格子的草稿数字
+    constructor(savedState = null) {
+        if (savedState) {
+            // 从保存的状态恢复
+            this.board = savedState.board;
+            this.solution = savedState.solution;
+            this.initialCells = new Set(savedState.initialCells);
+            
+            // 初始化草稿数组
+            this.draftNumbers = Array(9).fill().map(() => 
+                Array(9).fill().map(() => new Set())
+            );
+            
+            // 从保存的状态恢复草稿数字
+            if (savedState.draftNumbers) {
+                for (let i = 0; i < 9; i++) {
+                    for (let j = 0; j < 9; j++) {
+                        if (savedState.draftNumbers[i] && savedState.draftNumbers[i][j]) {
+                            const numbers = savedState.draftNumbers[i][j];
+                            numbers.forEach(num => this.draftNumbers[i][j].add(num));
+                        }
+                    }
+                }
+            }
+        } else {
+            // 创建新的状态
+            this.board = Array(9).fill().map(() => Array(9).fill(0));
+            this.solution = null;
+            this.initialCells = new Set();
+            this.draftNumbers = Array(9).fill().map(() => 
+                Array(9).fill().map(() => new Set())
+            );
+        }
+    }
+
+    // 用于序列化的方法
+    toJSON() {
+        return {
+            board: this.board,
+            solution: this.solution,
+            initialCells: Array.from(this.initialCells),
+            draftNumbers: this.draftNumbers.map(row =>
+                row.map(cell => Array.from(cell))
+            )
+        };
     }
 
     // 检查数字在指定位置是否有效
@@ -261,7 +298,9 @@ class SudokuBoard {
 
     // 移除草稿数字
     removeDraftNumber(row, col, num) {
-        this.draftNumbers[row][col].delete(num);
+        if (this.draftNumbers[row] && this.draftNumbers[row][col]) {
+            this.draftNumbers[row][col].delete(num);
+        }
     }
 
     // 获取格子的草稿数字
@@ -271,7 +310,9 @@ class SudokuBoard {
 
     // 清除格子的所有草稿数字
     clearDraftNumbers(row, col) {
-        this.draftNumbers[row][col].clear();
+        if (this.draftNumbers[row] && this.draftNumbers[row][col]) {
+            this.draftNumbers[row][col].clear();
+        }
     }
 
     // 清除所有草稿数字

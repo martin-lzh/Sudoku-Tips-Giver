@@ -710,40 +710,51 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
         function loadSettings() {
             const savedLang = localStorage.getItem('language');
             const savedTheme = localStorage.getItem('theme');
-            const savedBoard = localStorage.getItem('sudokuBoard');
-            const savedSolution = localStorage.getItem('sudokuSolution');
-            const savedDraftNumbers = localStorage.getItem('draftNumbers');
+            const savedState = localStorage.getItem('sudokuState');
+            const savedDraftMode = localStorage.getItem('isDraftMode');
             
             if (savedLang) currentLang = savedLang;
             if (savedTheme) currentTheme = savedTheme;
-            if (savedBoard && savedSolution) {
-                sudokuBoard.board = JSON.parse(savedBoard);
-                sudokuBoard.solution = JSON.parse(savedSolution);
-                if (savedDraftNumbers) {
-                    sudokuBoard.draftNumbers = JSON.parse(savedDraftNumbers);
+            if (savedDraftMode) isDraftMode = savedDraftMode === 'true';
+            
+            if (savedState) {
+                try {
+                    const state = JSON.parse(savedState);
+                    sudokuBoard = new SudokuBoard(state);
+                    lastSavedBoard = JSON.parse(JSON.stringify(state.board)); // 深拷贝
+                    updateGrid();
+                } catch (error) {
+                    console.error('Error loading saved state:', error);
+                    // 如果加载失败，创建新的数独板
+                    sudokuBoard = new SudokuBoard();
+                    lastSavedBoard = null;
                 }
-                lastSavedBoard = JSON.parse(savedBoard); // 深拷贝
-                updateGrid();
             }
             
+            // 更新界面状态
             document.body.setAttribute('data-theme', currentTheme);
+            document.body.classList.toggle('draft-mode', isDraftMode);
+            draftToggle.classList.toggle('active', isDraftMode);
         }
 
         // 保存设置
         function saveSettings() {
             localStorage.setItem('language', currentLang);
             localStorage.setItem('theme', currentTheme);
+            localStorage.setItem('isDraftMode', isDraftMode);
             
-            // 保存当前状态，包括草稿数字
-            const currentBoard = JSON.stringify(sudokuBoard.board);
-            const currentDraftNumbers = JSON.stringify(sudokuBoard.draftNumbers || {});
-            
-            // 只有当棋盘状态发生变化时才保存
-            if (currentBoard !== JSON.stringify(lastSavedBoard)) {
-                localStorage.setItem('sudokuBoard', currentBoard);
-                localStorage.setItem('sudokuSolution', JSON.stringify(sudokuBoard.solution));
-                localStorage.setItem('draftNumbers', currentDraftNumbers);
-                lastSavedBoard = JSON.parse(currentBoard); // 深拷贝
+            try {
+                // 保存当前状态
+                const currentState = sudokuBoard.toJSON();
+                const currentBoard = JSON.stringify(currentState.board);
+                
+                // 只有当棋盘状态发生变化时才保存
+                if (!lastSavedBoard || currentBoard !== JSON.stringify(lastSavedBoard)) {
+                    localStorage.setItem('sudokuState', JSON.stringify(currentState));
+                    lastSavedBoard = JSON.parse(currentBoard); // 深拷贝
+                }
+            } catch (error) {
+                console.error('Error saving state:', error);
             }
         }
 
