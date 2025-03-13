@@ -21,6 +21,7 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             --button-bg: #4CAF50;
             --button-text: #ffffff;
             --button-hover: #45a049;
+            --cell-size: 40px;
         }
 
         [data-theme="dark"] {
@@ -51,21 +52,46 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
 
         h1 {
             margin-bottom: 20px;
+            margin-top: 60px; /* 为顶部按钮留出空间 */
+            font-size: 24px;
+        }
+
+        h1 .title-zh,
+        h1 .title-en {
+            display: none;
+        }
+
+        [data-lang="zh"] .title-zh,
+        [data-lang="en"] .title-en {
+            display: inline;
         }
 
         .controls {
             margin-bottom: 20px;
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            width: 100%;
+            max-width: 800px;
         }
 
         select, button {
-            margin: 5px;
+            padding: 8px 16px;
             font-size: 16px;
+            min-width: 120px;
+            height: 40px;
             border: none;
             border-radius: 4px;
             background-color: var(--button-bg);
             color: var(--button-text);
             cursor: pointer;
             transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
         }
 
         select {
@@ -118,39 +144,73 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             font-weight: bold;
         }
 
-        .theme-toggle, .lang-toggle {
+        .theme-toggle, .lang-toggle, .help-button {
             position: fixed;
-            top: 20px;
-            padding: 8px 16px;
-            font-size: 16px;
-            border: none;
-            border-radius: 4px;
-            background-color: var(--button-bg);
-            color: var(--button-text);
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .theme-toggle {
-            right: 20px;
-        }
-
-        .lang-toggle {
-            right: 100px;
+            top: 10px;
+            height: 36px;
+            min-width: unset;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
         }
 
         .help-button {
-            position: fixed;
-            top: 20px;
-            right: 180px;
-            padding: 8px 16px;
-            font-size: 16px;
-            border: none;
-            border-radius: 4px;
-            background-color: var(--button-bg);
-            color: var(--button-text);
-            cursor: pointer;
-            transition: background-color 0.3s;
+            right: 10px;
+            width: 36px;
+        }
+
+        .lang-toggle {
+            right: 56px;
+            width: 60px;
+        }
+
+        .theme-toggle {
+            right: 126px;
+            width: 36px;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 20px;
+            }
+
+            .help-button {
+                right: 5px;
+                width: 32px;
+            }
+
+            .lang-toggle {
+                right: 42px;
+                width: 50px;
+            }
+
+            .theme-toggle {
+                right: 97px;
+                width: 32px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            h1 {
+                font-size: 18px;
+            }
+
+            .help-button {
+                right: 3px;
+                width: 28px;
+            }
+
+            .lang-toggle {
+                right: 34px;
+                width: 45px;
+            }
+
+            .theme-toggle {
+                right: 82px;
+                width: 28px;
+            }
         }
 
         .modal {
@@ -275,7 +335,9 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                     buttons: "Button Functions",
                     controls: "How to Play",
                     interface: "Interface Controls"
-                }
+                },
+                completed: "Congratulations! You've completed the puzzle!",
+                incorrect: "Sorry, the puzzle is not completed correctly."
             },
             zh: {
                 title: "数独提示器",
@@ -294,7 +356,9 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                     buttons: "按钮功能",
                     controls: "操作说明",
                     interface: "界面控制"
-                }
+                },
+                completed: "恭喜！你已经完成了数独！",
+                incorrect: "抱歉，数独没有正确完成。"
             }
         };
 
@@ -358,8 +422,10 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
         function updateUI() {
             const t = translations[currentLang];
             
-            // 更新标题
+            // 更新标题和语言属性
             document.title = t.title;
+            document.body.setAttribute('data-lang', currentLang);
+            document.querySelector('h1').innerHTML = '<span class="title-zh">数独提示器</span><span class="title-en">Sudoku Tips Giver</span>';
             
             // 更新按钮文本
             generateButton.textContent = t.generate;
@@ -370,7 +436,7 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             // 更新难度选择
             difficultySelect.innerHTML = `
                 <option value="easy">${t.easy}</option>
-                <option value="medium">${t.medium}</option>
+                <option value="medium" selected>${t.medium}</option>
                 <option value="hard">${t.hard}</option>
             `;
             
@@ -467,52 +533,86 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                 const value = sudokuBoard.board[row][col];
                 
                 cell.textContent = value || '';
-                cell.classList.toggle('initial', value !== 0);
+                cell.classList.toggle('initial', sudokuBoard.isInitialCell(row, col));
             });
-            saveSettings();  // 每次更新网格后保存状态
+            saveSettings();
         }
 
-        // 事件监听器
-        generateButton.addEventListener('click', async () => {
+        // 生成按钮点击事件
+        generateButton.addEventListener('click', () => {
             showLoading();
-            
-            // 使用 setTimeout 模拟异步操作
             setTimeout(() => {
                 const difficulty = difficultySelect.value;
                 sudokuBoard.generatePuzzle(difficulty);
                 updateGrid();
                 hideLoading();
+                if (selectedCell) {
+                    selectedCell.classList.remove('highlight');
+                    selectedCell = null;
+                }
+                messageDiv.textContent = '';
+                messageDiv.className = 'message';
             }, 100);
         });
 
-        hintButton.addEventListener('click', () => {
-            if (!selectedCell) return;
-            
-            const row = parseInt(selectedCell.dataset.row);
-            const col = parseInt(selectedCell.dataset.col);
-            
-            if (sudokuBoard.board[row][col] !== 0) return;
-            
+        // 提示按钮点击事件
+        hintButton.addEventListener('click', async () => {
             const hint = sudokuBoard.getHint();
             if (hint) {
-                selectedCell.textContent = hint.value;
-                sudokuBoard.board[row][col] = hint.value;
+                highlightCell(hint.row, hint.col);
+                messageDiv.className = 'message success';
+                const possibleCount = hint.possibleNumbers.length;
+                messageDiv.textContent = currentLang === 'zh' ? 
+                    `第${hint.row + 1}行第${hint.col + 1}列${possibleCount === 1 ? 
+                        `只能填入数字 ${hint.possibleNumbers[0]}` : 
+                        `可以填入的数字有: ${hint.possibleNumbers.join(', ')}`}` :
+                    `Row ${hint.row + 1}, Column ${hint.col + 1} ${possibleCount === 1 ? 
+                        `can only be filled with ${hint.possibleNumbers[0]}` : 
+                        `can be filled with: ${hint.possibleNumbers.join(', ')}`}`;
+            } else {
+                checkCompletion();
             }
         });
 
-        answerButton.addEventListener('click', () => {
-            if (!selectedCell) return;
-            
-            const row = parseInt(selectedCell.dataset.row);
-            const col = parseInt(selectedCell.dataset.col);
-            
-            if (sudokuBoard.board[row][col] !== 0) return;
-            
-            selectedCell.textContent = sudokuBoard.solution[row][col];
-            sudokuBoard.board[row][col] = sudokuBoard.solution[row][col];
+        // 答案按钮点击事件
+        answerButton.addEventListener('click', async () => {
+            const hint = sudokuBoard.getHint();
+            if (hint && hint.value) {
+                const cell = document.querySelector(`[data-row="${hint.row}"][data-col="${hint.col}"]`);
+                if (cell) {
+                    cell.textContent = hint.value;
+                    sudokuBoard.board[hint.row][hint.col] = hint.value;
+                    saveSettings();
+                    
+                    // 获取下一个提示
+                    const nextHint = sudokuBoard.getHint();
+                    if (nextHint) {
+                        highlightCell(nextHint.row, nextHint.col);
+                        messageDiv.className = 'message success';
+                        const possibleCount = nextHint.possibleNumbers.length;
+                        messageDiv.textContent = currentLang === 'zh' ? 
+                            `下一步：第${nextHint.row + 1}行第${nextHint.col + 1}列${possibleCount === 1 ? 
+                                `只能填入数字 ${nextHint.possibleNumbers[0]}` : 
+                                `可以填入的数字有: ${nextHint.possibleNumbers.join(', ')}`}` :
+                            `Next: Row ${nextHint.row + 1}, Column ${nextHint.col + 1} ${possibleCount === 1 ? 
+                                `can only be filled with ${nextHint.possibleNumbers[0]}` : 
+                                `can be filled with: ${nextHint.possibleNumbers.join(', ')}`}`;
+                    } else {
+                        checkCompletion();
+                    }
+                }
+            }
         });
 
+        // 清空按钮点击事件
         clearButton.addEventListener('click', () => {
+            sudokuBoard = new SudokuBoard();
+            if (selectedCell) {
+                selectedCell.classList.remove('highlight');
+                selectedCell = null;
+            }
+            messageDiv.textContent = '';
+            messageDiv.className = 'message';
             updateGrid();
         });
 
@@ -573,6 +673,94 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                 if (nextCell) nextCell.click();
             }
         });
+
+        // 高亮指定格子
+        function highlightCell(row, col) {
+            const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+            if (cell) {
+                if (selectedCell) {
+                    selectedCell.classList.remove('highlight');
+                }
+                selectedCell = cell;
+                cell.classList.add('highlight');
+            }
+        }
+
+        // 检查完成状态
+        function checkCompletion() {
+            let isComplete = true;
+            let isCorrect = true;
+
+            // 检查是否填满
+            for (let i = 0; i < 9; i++) {
+                for (let j = 0; j < 9; j++) {
+                    if (sudokuBoard.board[i][j] === 0) {
+                        isComplete = false;
+                        break;
+                    }
+                }
+                if (!isComplete) break;
+            }
+
+            if (isComplete) {
+                // 检查每一行
+                for (let i = 0; i < 9; i++) {
+                    let row = new Set();
+                    for (let j = 0; j < 9; j++) {
+                        if (row.has(sudokuBoard.board[i][j])) {
+                            isCorrect = false;
+                            break;
+                        }
+                        row.add(sudokuBoard.board[i][j]);
+                    }
+                    if (!isCorrect) break;
+                }
+
+                // 检查每一列
+                if (isCorrect) {
+                    for (let j = 0; j < 9; j++) {
+                        let col = new Set();
+                        for (let i = 0; i < 9; i++) {
+                            if (col.has(sudokuBoard.board[i][j])) {
+                                isCorrect = false;
+                                break;
+                            }
+                            col.add(sudokuBoard.board[i][j]);
+                        }
+                        if (!isCorrect) break;
+                    }
+                }
+
+                // 检查每个3x3方格
+                if (isCorrect) {
+                    for (let block = 0; block < 9; block++) {
+                        let square = new Set();
+                        let startRow = Math.floor(block / 3) * 3;
+                        let startCol = (block % 3) * 3;
+                        for (let i = 0; i < 3; i++) {
+                            for (let j = 0; j < 3; j++) {
+                                let num = sudokuBoard.board[startRow + i][startCol + j];
+                                if (square.has(num)) {
+                                    isCorrect = false;
+                                    break;
+                                }
+                                square.add(num);
+                            }
+                        }
+                        if (!isCorrect) break;
+                    }
+                }
+
+                const messageDiv = document.getElementById('message');
+                if (isCorrect) {
+                    messageDiv.textContent = translations[currentLang].completed;
+                    messageDiv.className = 'message success';
+                } else {
+                    messageDiv.textContent = translations[currentLang].incorrect;
+                    messageDiv.className = 'message error';
+                }
+            }
+        }
 
         // 初始化应用
         init();

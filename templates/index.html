@@ -609,7 +609,7 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             // 翻译数独提示消息
             if (currentLanguage === 'en') {
                 messageDiv.textContent = messageDiv.textContent
-                    .replace(/第(\d+)行第(\d+)列/g, 'Row $1, Column $2')
+                    .replace(/在?第(\d+)行第(\d+)列/g, 'Row $1, Column $2')
                     .replace(/只能填入数字(\d+)/, 'can only be filled with number $1')
                     .replace(/可以填入的数字有:/, 'Possible numbers are:');
             } else {

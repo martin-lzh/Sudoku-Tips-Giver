@@ -9,6 +9,7 @@ class SudokuBoard {
     constructor() {
         this.board = Array(9).fill().map(() => Array(9).fill(0));
         this.solution = null;
+        this.initialCells = new Set();  // 存储初始数字的位置
     }
 
     // 检查数字在指定位置是否有效
@@ -60,8 +61,9 @@ class SudokuBoard {
 
     // 生成数独题目
     generatePuzzle(difficulty) {
-        // 清空棋盘
+        // 清空棋盘和初始格子集合
         this.board = Array(9).fill().map(() => Array(9).fill(0));
+        this.initialCells.clear();
         
         // 生成完整解
         this.generateSolution();
@@ -81,6 +83,8 @@ class SudokuBoard {
             case 'hard':
                 cellsToRemove = 65; // 保留20-25个数字
                 break;
+            default:
+                cellsToRemove = 55; // 默认中等难度
         }
 
         // 随机移除数字
@@ -94,60 +98,145 @@ class SudokuBoard {
             this.board[row][col] = 0;
         }
 
+        // 记录初始数字的位置
+        for (let i = 0; i < 9; i++) {
+            for (let j = 0; j < 9; j++) {
+                if (this.board[i][j] !== 0) {
+                    this.initialCells.add(`${i},${j}`);
+                }
+            }
+        }
+
         return this.board;
     }
 
-    // 获取提示
-    getHint() {
-        // 找到第一个空格子
+    // 找到最受约束的空格子
+    findMostConstrainedCell() {
+        let minPossibilities = 10;
+        let candidates = [];
+        
         for (let i = 0; i < 9; i++) {
             for (let j = 0; j < 9; j++) {
                 if (this.board[i][j] === 0) {
-                    return {
-                        row: i,
-                        col: j,
-                        value: this.solution[i][j]
-                    };
+                    let possibleCount = 0;
+                    for (let num = 1; num <= 9; num++) {
+                        if (this.isValid(i, j, num)) {
+                            possibleCount++;
+                        }
+                    }
+                    if (possibleCount < minPossibilities) {
+                        minPossibilities = possibleCount;
+                        candidates = [{row: i, col: j}];
+                    } else if (possibleCount === minPossibilities) {
+                        candidates.push({row: i, col: j});
+                    }
                 }
             }
+        }
+        
+        if (candidates.length > 0) {
+            // 随机选择一个候选位置，增加趣味性
+            const randomIndex = Math.floor(Math.random() * candidates.length);
+            return candidates[randomIndex];
         }
         return null;
     }
 
-    // 检查是否有唯一解
-    hasUniqueSolution() {
-        let solutions = 0;
-        let tempBoard = JSON.parse(JSON.stringify(this.board));
-        
-        const countSolutions = (board, row, col) => {
-            if (solutions > 1) return;
-            
-            if (row === 9) {
-                solutions++;
-                return;
-            }
-            
-            if (col === 9) {
-                countSolutions(board, row + 1, 0);
-                return;
-            }
-            
-            if (board[row][col] !== 0) {
-                countSolutions(board, row, col + 1);
-                return;
-            }
-            
-            for (let num = 1; num <= 9; num++) {
-                if (this.isValid(row, col, num)) {
-                    board[row][col] = num;
-                    countSolutions(board, row, col + 1);
-                    board[row][col] = 0;
+    // 获取提示
+    getHint() {
+        // 检查是否有空格子
+        let hasEmpty = false;
+        for (let i = 0; i < 9; i++) {
+            for (let j = 0; j < 9; j++) {
+                if (this.board[i][j] === 0) {
+                    hasEmpty = true;
+                    break;
                 }
             }
+            if (hasEmpty) break;
+        }
+
+        if (!hasEmpty) {
+            return null;
+        }
+
+        // 找到最受约束的格子
+        const bestCell = this.findMostConstrainedCell();
+        if (!bestCell) {
+            return null;
+        }
+
+        // 计算可能的数字
+        let possibleNumbers = [];
+        for (let num = 1; num <= 9; num++) {
+            if (this.isValid(bestCell.row, bestCell.col, num)) {
+                possibleNumbers.push(num);
+            }
+        }
+
+        return {
+            row: bestCell.row,
+            col: bestCell.col,
+            possibleNumbers: possibleNumbers,
+            value: this.solution ? this.solution[bestCell.row][bestCell.col] : null
         };
-        
-        countSolutions(tempBoard, 0, 0);
-        return solutions === 1;
+    }
+
+    // 检查是否完成
+    isCompleted() {
+        // 检查是否填满
+        for (let i = 0; i < 9; i++) {
+            for (let j = 0; j < 9; j++) {
+                if (this.board[i][j] === 0) {
+                    return false;
+                }
+            }
+        }
+
+        // 检查每一行
+        for (let i = 0; i < 9; i++) {
+            let row = new Set();
+            for (let j = 0; j < 9; j++) {
+                if (row.has(this.board[i][j])) {
+                    return false;
+                }
+                row.add(this.board[i][j]);
+            }
+        }
+
+        // 检查每一列
+        for (let j = 0; j < 9; j++) {
+            let col = new Set();
+            for (let i = 0; i < 9; i++) {
+                if (col.has(this.board[i][j])) {
+                    return false;
+                }
+                col.add(this.board[i][j]);
+            }
+        }
+
+        // 检查每个3x3方格
+        for (let block = 0; block < 9; block++) {
+            let square = new Set();
+            let startRow = Math.floor(block / 3) * 3;
+            let startCol = (block % 3) * 3;
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    let num = this.board[startRow + i][startCol + j];
+                    if (square.has(num)) {
+                        return false;
+                    }
+                    square.add(num);
+                }
+            }
+        }
+
+        return true;
+    }
+
+    // 检查格子是否为初始数字
+    isInitialCell(row, col) {
+        return this.initialCells.has(`${row},${col}`);
     }
 
     // 工具函数：打乱数组
