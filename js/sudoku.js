@@ -99,6 +99,75 @@ class SudokuBoard {
         return true;
     }
 
+    // 检查当前数独谜题是否有唯一解
+    hasUniqueSolution() {
+        // 创建棋盘副本
+        const tmpBoard = JSON.parse(JSON.stringify(this.board));
+        let solutionCount = 0;
+        
+        // 辅助函数：检查是否可以放置数字
+        const isValidPlacement = (board, row, col, num) => {
+            // 检查行
+            for (let x = 0; x < 9; x++) {
+                if (board[row][x] === num) return false;
+            }
+            
+            // 检查列
+            for (let x = 0; x < 9; x++) {
+                if (board[x][col] === num) return false;
+            }
+            
+            // 检查3x3方格
+            const startRow = row - row % 3;
+            const startCol = col - col % 3;
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i + startRow][j + startCol] === num) return false;
+                }
+            }
+            
+            return true;
+        };
+        
+        // 递归解数独
+        const solve = (board) => {
+            // 如果已经找到多个解，就停止搜索
+            if (solutionCount > 1) return;
+            
+            // 寻找空格子
+            let emptyCell = null;
+            for (let i = 0; i < 9 && !emptyCell; i++) {
+                for (let j = 0; j < 9 && !emptyCell; j++) {
+                    if (board[i][j] === 0) {
+                        emptyCell = { row: i, col: j };
+                    }
+                }
+            }
+            
+            // 如果没有空格子，找到一个解
+            if (!emptyCell) {
+                solutionCount++;
+                return;
+            }
+            
+            const { row, col } = emptyCell;
+            
+            // 尝试每个数字
+            for (let num = 1; num <= 9; num++) {
+                if (isValidPlacement(board, row, col, num)) {
+                    board[row][col] = num;
+                    solve(board);
+                    board[row][col] = 0; // 回溯
+                }
+            }
+        };
+        
+        solve(tmpBoard);
+        
+        // 返回是否只有一个解
+        return solutionCount === 1;
+    }
+
     // 生成数独题目
     generatePuzzle(difficulty) {
         // 清空棋盘和初始格子集合
@@ -111,31 +180,45 @@ class SudokuBoard {
         // 保存完整解
         this.solution = JSON.parse(JSON.stringify(this.board));
         
-        // 根据难度移除数字
+        // 根据难度确定要移除的数字数量
         let cellsToRemove;
         switch(difficulty) {
             case 'easy':
-                cellsToRemove = 45; // 保留35-40个数字
+                cellsToRemove = 40; // 保留40-45个数字
                 break;
             case 'medium':
-                cellsToRemove = 55; // 保留25-30个数字
+                cellsToRemove = 50; // 保留30-35个数字
                 break;
             case 'hard':
-                cellsToRemove = 65; // 保留20-25个数字
+                cellsToRemove = 60; // 保留20-25个数字
                 break;
             default:
-                cellsToRemove = 55; // 默认中等难度
+                cellsToRemove = 50; // 默认中等难度
         }
 
-        // 随机移除数字
+        // 随机排序所有位置
         let positions = Array.from({length: 81}, (_, i) => i);
         positions = this.shuffleArray(positions);
         
-        for (let i = 0; i < cellsToRemove; i++) {
+        // 逐个尝试移除数字，并保证唯一解
+        for (let i = 0; i < positions.length && cellsToRemove > 0; i++) {
             let pos = positions[i];
             let row = Math.floor(pos / 9);
             let col = pos % 9;
+            
+            // 暂存当前值
+            let temp = this.board[row][col];
+            
+            // 尝试移除
             this.board[row][col] = 0;
+            
+            // 检查是否仍有唯一解
+            if (this.hasUniqueSolution()) {
+                cellsToRemove--; // 成功移除一个数字
+            } else {
+                // 如果没有唯一解，则恢复
+                this.board[row][col] = temp;
+            }
         }
 
         // 记录初始数字的位置
@@ -334,4 +417,4 @@ class SudokuBoard {
 // 导出类供其他模块使用
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = SudokuBoard;
-} 
+}
