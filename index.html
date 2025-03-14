@@ -56,7 +56,7 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
 
         h1 {
             margin-bottom: 20px;
-            margin-top: 60px; /* 为顶部按钮留出空间 */
+            margin-top: 20px; /* 为顶部按钮留出空间 */
             font-size: 24px;
         }
 
@@ -177,6 +177,17 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             z-index: 2;
             user-select: none;
         }
+        
+        /* 初始数字样式 */
+        .cell.initial .main-number {
+            font-weight: bold;
+            color: var(--highlight-color);
+        }
+        
+        /* 初始格子鼠标样式 */
+        .cell.initial {
+            cursor: not-allowed;
+        }
 
         .cell .draft-grid {
             display: grid;
@@ -213,44 +224,34 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             cursor: crosshair;
         }
 
-        /* 移除顶部草稿按钮的样式 */
-        .draft-toggle {
+        .help-icon {
+            width: 18px;
+            height: 18px;
+            vertical-align: middle;
+            margin-right: 5px;
+            filter: invert(1);
+        }
+        
+        /* 在不同主题下调整图标颜色 */
+        [data-theme="light"] .help-icon {
+            filter: invert(0.3);
+        }
+        
+        [data-theme="dark"] .help-icon {
+            filter: invert(0.8);
+        }
+        
+        /* 主题特定图标显示逻辑 */
+        .light-only, .dark-only {
             display: none;
         }
-
-        /* 新的长条形草稿按钮样式 */
-        .draft-button-container {
-            width: calc(9 * var(--cell-size) + 8px);
-            margin: 10px auto;
+        
+        [data-theme="light"] .light-only {
+            display: inline-block;
         }
-
-        .draft-button {
-            width: 100%;
-            padding: 8px 0;
-            font-size: 16px;
-            background-color: var(--button-bg);
-            color: var(--button-text);
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .draft-button.active {
-            background-color: var(--highlight-color);
-            transform: scale(1.02);
-        }
-
-        .draft-button:hover {
-            background-color: var(--button-hover);
-        }
-
-        .draft-icon {
-            margin-right: 8px;
+        
+        [data-theme="dark"] .dark-only {
+            display: inline-block;
         }
 
         .help-button {
@@ -267,7 +268,7 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             position: fixed;
             top: 10px;
             right: 56px;
-            width: 60px;
+            width: 36px;
             height: 36px;
             min-width: unset;
             padding: 0;
@@ -276,28 +277,11 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
         .theme-toggle {
             position: fixed;
             top: 10px;
-            right: 126px;
+            right: 102px;
             width: 36px;
             height: 36px;
             min-width: unset;
             padding: 0;
-        }
-
-        .draft-toggle {
-            position: fixed;
-            top: 10px;
-            right: 172px;
-            width: 36px;
-            height: 36px;
-            min-width: unset;
-            padding: 0;
-            background-color: var(--button-bg);
-            transition: all 0.3s ease;
-        }
-
-        .draft-toggle.active {
-            background-color: var(--highlight-color);
-            transform: scale(1.1);
         }
 
         @media (max-width: 600px) {
@@ -305,6 +289,23 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                 font-size: 20px;
             }
 
+            .button-text {
+                display: none;
+            }
+            
+            .icon {
+                margin-right: 0;
+            }
+            
+            .controls button {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-width: unset;
+                width: auto;
+                padding: 8px 12px;
+            }
+            
             .help-button {
                 right: 5px;
                 width: 32px;
@@ -312,20 +313,14 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
 
             .lang-toggle {
                 right: 42px;
-                width: 50px;
+                width: 32px;
             }
 
             .theme-toggle {
-                right: 97px;
+                right: 79px;
                 width: 32px;
             }
 
-            .draft-toggle {
-                right: 152px;
-                width: 32px;
-                height: 32px;
-                font-size: 18px;
-            }
         }
 
         @media (max-width: 360px) {
@@ -340,19 +335,12 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
 
             .lang-toggle {
                 right: 34px;
-                width: 45px;
+                width: 28px;
             }
 
             .theme-toggle {
-                right: 82px;
+                right: 65px;
                 width: 28px;
-            }
-
-            .draft-toggle {
-                right: 130px;
-                width: 28px;
-                height: 28px;
-                font-size: 16px;
             }
         }
 
@@ -364,7 +352,7 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
+            z-index: 1040;
         }
 
         .modal.show {
@@ -383,15 +371,28 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             color: var(--text-color);
             margin: 0;
             max-height: 90vh;
+            overflow-x: hidden;
             overflow-y: auto;
         }
 
         .close {
-            position: absolute;
+            position: sticky;
+            top: 0;
+            float: right;
             right: 20px;
-            top: 10px;
             font-size: 24px;
             cursor: pointer;
+            margin-top: -10px;
+            margin-right: -10px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--bg-color);
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            z-index: 10;
         }
 
         .loading-overlay {
@@ -426,9 +427,9 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             grid-template-rows: repeat(2, 1fr);
             gap: 4px;
             padding: 8px;
-            width: calc(9 * var(--cell-size) + 8px);
-            height: calc((9 * var(--cell-size) + 8px) / 2.5);
-            margin: 20px auto;
+            width: calc(9 * var(--cell-size) + 20px);
+            height: calc((9 * var(--cell-size) + 20px) / 2.5);
+            margin: 10px auto;
             background-color: var(--grid-bg);
             border-radius: 8px;
             box-sizing: border-box;
@@ -474,6 +475,120 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             0% { transform: translate(-50%, -50%) rotate(0deg); }
             100% { transform: translate(-50%, -50%) rotate(360deg); }
         }
+
+        /* 图标样式 */
+        .icon {
+            width: calc(var(--cell-size) * 0.5);
+            height: calc(var(--cell-size) * 0.5);
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+            filter: invert(1);
+        }
+        
+        /* 主题相关图标显示/隐藏 */
+        .theme-icon {
+            display: none;
+        }
+        
+        [data-theme="light"] .light-icon {
+            display: inline-block;
+        }
+        
+        [data-theme="dark"] .dark-icon {
+            display: inline-block;
+        }
+        
+        .button-text {
+            display: inline;
+        }
+        
+        /* 为固定在顶部的按钮添加图标样式 */
+        .fixed-button-icon {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            filter: invert(1);
+        }
+        
+        .fixed-button-icon img {
+            width: calc(var(--cell-size) * 0.5);
+            height: calc(var(--cell-size) * 0.5);
+        }
+
+        .backspace-icon {
+            width: calc(var(--cell-size) * 0.5);
+            height: calc(var(--cell-size) * 0.5);
+            filter: invert(1);  /* To make the icon visible on the button */
+            vertical-align: middle;
+        }
+
+        /* 新的功能按钮栏样式 */
+        .function-buttons {
+        width: calc(9 * var(--cell-size) + 20px);
+        margin: 0px auto;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        }
+
+        .function-button {
+            padding: 8px 0;
+            font-size: 16px;
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 40px;
+            min-width: unset; /* 移除最小宽度限制 */
+        }
+
+        .function-button:hover {
+            background-color: var(--button-hover);
+        }
+
+        .function-button.active {
+            background-color: #af0000;
+            transform: scale(0.95);
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .function-icon {
+            width: calc(var(--cell-size) * 0.5);
+            height: calc(var(--cell-size) * 0.5);
+            margin-right: 5px;
+            filter: invert(1);
+        }
+
+        /* 添加媒体查询，在较小屏幕上隐藏按钮文字 */
+        @media (max-width: 450px) {
+            .function-button .button-text {
+                display: none;
+            }
+            
+            .function-icon {
+                margin-right: 0; /* 没有文字时不需要右边距 */
+            }
+        }
+        
+        /* 在更小的屏幕上进一步调整按钮大小 */
+        @media (max-width: 350px) {
+            .function-buttons {
+                gap: 4px;
+            }
+            
+            .function-button {
+                padding: 4px;
+                height: 36px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -486,21 +601,33 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                 <option value="medium">中等 | Medium</option>
                 <option value="hard">困难 | Hard</option>
             </select>
-            <button id="generate">生成数独 | Generate Sudoku</button>
-            <button id="hint">获取提示 | Get Hint</button>
-            <button id="answer">显示答案 | Show Answer</button>
-            <button id="clear">清空棋盘 | Clear Board</button>
+            <button id="generate">
+                <img src="assets/dice.svg" alt="生成" class="icon">
+                <span class="button-text">生成数独 | Generate Sudoku</span>
+            </button>
         </div>
 
         <div class="grid" id="grid">
             <!-- 数独格子将通过 JavaScript 动态生成 -->
         </div>
 
-        <!-- 新的草稿按钮放在数独九宫格下方、软键盘上方 -->
-        <div class="draft-button-container">
-            <button id="draftButton" class="draft-button">
-                <span class="draft-icon">✎</span>
-                <span id="draftButtonText">进入草稿模式</span>
+        <!-- 替换原来的草稿按钮容器，改为功能按钮栏 -->
+        <div class="function-buttons">
+            <button id="hint" class="function-button">
+                <img src="assets/lightbulb-fill.svg" alt="提示" class="function-icon">
+                <span class="button-text">提示</span>
+            </button>
+            <button id="answer" class="function-button">
+                <img src="assets/eye-fill.svg" alt="答案" class="function-icon">
+                <span class="button-text">答案</span>
+            </button>
+            <button id="clear" class="function-button">
+                <img src="assets/trash.svg" alt="清除" class="function-icon">
+                <span class="button-text">清除</span>
+            </button>
+            <button id="draftButton" class="function-button">
+                <img src="assets/pen-fill.svg" alt="草稿" class="function-icon">
+                <span id="draftButtonText" class="button-text">草稿</span>
             </button>
         </div>
 
@@ -514,16 +641,28 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             <button class="soft-key" data-value="7">7</button>
             <button class="soft-key" data-value="8">8</button>
             <button class="soft-key" data-value="9">9</button>
-            <button class="soft-key clear" data-value="0">⌫</button>
+            <button class="soft-key clear" data-value="0"><img src="assets/backspace.svg" alt="⌫" class="backspace-icon"></button>
         </div>
 
         <div id="message"></div>
     </div>
 
-    <button class="theme-toggle" id="themeToggle">🌓</button>
-    <button class="lang-toggle" id="langToggle">中/En</button>
-    <button class="help-button" id="helpButton">?</button>
-    <button class="draft-toggle" id="draftToggle">✎</button>
+    <button class="theme-toggle" id="themeToggle">
+        <div class="fixed-button-icon">
+            <img src="assets/brightness-high-fill.svg" alt="浅色模式" class="theme-icon light-icon">
+            <img src="assets/moon-stars-fill.svg" alt="深色模式" class="theme-icon dark-icon">
+        </div>
+    </button>
+    <button class="lang-toggle" id="langToggle">
+        <div class="fixed-button-icon">
+            <img src="assets/translate.svg" alt="切换语言">
+        </div>
+    </button>
+    <button class="help-button" id="helpButton">
+        <div class="fixed-button-icon">
+            <img src="assets/question-lg.svg" alt="帮助">
+        </div>
+    </button>
 
     <div id="helpModal" class="modal">
         <div class="modal-content">
@@ -563,8 +702,8 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                 completed: "Congratulations! You've completed the puzzle!",
                 incorrect: "Sorry, the puzzle is not completed correctly.",
                 draft: {
-                    enter: "Enter Draft Mode",
-                    exit: "Exit Draft Mode"
+                    enter: "Draft",
+                    exit: "Draft"
                 }
             },
             zh: {
@@ -588,8 +727,8 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                 completed: "恭喜！你已经完成了数独！",
                 incorrect: "抱歉，数独没有正确完成。",
                 draft: {
-                    enter: "进入草稿模式",
-                    exit: "退出草稿模式"
+                    enter: "草稿",
+                    exit: "草稿"
                 }
             }
         };
@@ -616,7 +755,6 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
         const helpContent = document.getElementById('helpContent');
         const loadingOverlay = document.getElementById('loadingOverlay');
         const messageDiv = document.getElementById('message');
-        const draftToggle = document.getElementById('draftToggle');
 
         // 初始化
         function init() {
@@ -624,6 +762,9 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             loadSettings();
             updateUI();
             initSoftKeyboard();
+            
+            // 在加载时更新草稿按钮状态
+            draftButton.classList.toggle('active', isDraftMode);
         }
 
         // 初始化软键盘
@@ -697,6 +838,15 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
 
         // 选择格子
         function selectCell(cell) {
+            // 获取行和列
+            const row = parseInt(cell.dataset.row);
+            const col = parseInt(cell.dataset.col);
+            
+            // 检查是否为初始单元格，如果是则不选中它
+            if (sudokuBoard.isInitialCell(row, col)) {
+                return;
+            }
+            
             if (selectedCell) {
                 selectedCell.classList.remove('highlight');
             }
@@ -714,15 +864,18 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             document.querySelector('h1').innerHTML = '<span class="title-zh">数独提示器</span><span class="title-en">Sudoku Tips Giver</span>';
             
             // 更新按钮文本
-            generateButton.textContent = t.generate;
-            hintButton.textContent = t.hint;
-            answerButton.textContent = t.answer;
-            clearButton.textContent = t.clear;
+            document.querySelector('#generate .button-text').textContent = t.generate;
+            
+            // 更新功能按钮文本
+            document.querySelector('#hint .button-text').textContent = currentLang === 'zh' ? '提示' : 'Tip';
+            document.querySelector('#answer .button-text').textContent = currentLang === 'zh' ? '答案' : 'Answer';
+            document.querySelector('#clear .button-text').textContent = currentLang === 'zh' ? '清除' : 'Clear';
+            document.querySelector('#draftButton .button-text').textContent = currentLang === 'zh' ? '草稿' : 'Draft';
             
             // 更新草稿按钮文本
             draftButtonText.textContent = isDraftMode ? 
-                (currentLang === 'zh' ? '退出草稿模式' : 'Exit Draft Mode') : 
-                (currentLang === 'zh' ? '进入草稿模式' : 'Enter Draft Mode');
+                (currentLang === 'zh' ? '草稿' : 'Draft') : 
+                (currentLang === 'zh' ? '草稿' : 'Draft');
             
             // 更新难度选择
             difficultySelect.innerHTML = `
@@ -748,31 +901,31 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                 </ul>
                 <h3>${t.buttons}</h3>
                 <ul>
-                    <li>${currentLang === 'zh' ? '生成数独' : 'Generate Sudoku'}: ${currentLang === 'zh' ? '根据选择的难度生成新的数独题目' : 'Creates a new puzzle based on selected difficulty'}</li>
-                    <li>${currentLang === 'zh' ? '获取提示' : 'Get Hint'}: ${currentLang === 'zh' ? '高亮显示最适合填写的格子，并提供可能的数字' : 'Highlights the most suitable cell to fill and shows possible numbers'}</li>
-                    <li>${currentLang === 'zh' ? '显示答案' : 'Show Answer'}: ${currentLang === 'zh' ? '在高亮格子中填入正确答案' : 'Fills in the correct number in the highlighted cell'}</li>
-                    <li>${currentLang === 'zh' ? '清空棋盘' : 'Clear Board'}: ${currentLang === 'zh' ? '清除所有已填写的数字，重新开始' : 'Removes all filled numbers and starts over'}</li>
+                    <li><img src="assets/dice.svg" alt="生成" class="help-icon"> ${currentLang === 'zh' ? '生成数独' : 'Generate Sudoku'}: ${currentLang === 'zh' ? '根据选择的难度生成新的数独题目' : 'Creates a new puzzle based on selected difficulty'}</li>
+                    <li><img src="assets/lightbulb-fill.svg" alt="提示" class="help-icon"> ${currentLang === 'zh' ? '获取提示' : 'Get Hint'}: ${currentLang === 'zh' ? '高亮显示最适合填写的格子，并提供可能的数字' : 'Highlights the most suitable cell to fill and shows possible numbers'}</li>
+                    <li><img src="assets/eye-fill.svg" alt="答案" class="help-icon"> ${currentLang === 'zh' ? '显示答案' : 'Show Answer'}: ${currentLang === 'zh' ? '在高亮格子中填入正确答案' : 'Fills in the correct number in the highlighted cell'}</li>
+                    <li><img src="assets/trash.svg" alt="清除" class="help-icon"> ${currentLang === 'zh' ? '清空棋盘' : 'Clear Board'}: ${currentLang === 'zh' ? '清除所有已填写的数字，重新开始' : 'Removes all filled numbers and starts over'}</li>
                 </ul>
                 <h3>${t.controls}</h3>
                 <ul>
                     <li>${currentLang === 'zh' ? '使用鼠标点击格子或键盘方向键进行导航' : 'Use mouse clicks or arrow keys for navigation'}</li>
                     <li>${currentLang === 'zh' ? '直接输入数字 1-9' : 'Input numbers 1-9 directly'}</li>
-                    <li>${currentLang === 'zh' ? '按退格键清除当前格子' : 'Press Backspace to clear current cell'}</li>
+                    <li><img src="assets/backspace.svg" alt="退格" class="help-icon"> ${currentLang === 'zh' ? '按退格键清除当前格子' : 'Press Backspace to clear current cell'}</li>
                     <li>${currentLang === 'zh' ? '系统会自动检查是否完成' : 'System automatically checks for completion'}</li>
                 </ul>
                 <h3>${currentLang === 'zh' ? '草稿功能' : 'Draft Feature'}</h3>
                 <ul>
-                    <li><strong>✎</strong>: ${currentLang === 'zh' ? '点击切换草稿模式' : 'Click to toggle Draft Mode'}</li>
+                    <li><img src="assets/pen-fill.svg" alt="草稿" class="help-icon"> ${currentLang === 'zh' ? '点击切换草稿模式' : 'Click to toggle Draft Mode'}</li>
                     <li>${currentLang === 'zh' ? '在草稿模式下，可以在格子中添加多个候选数字' : 'In Draft Mode, you can add multiple candidate numbers in cells'}</li>
                     <li>${currentLang === 'zh' ? '再次点击草稿按钮可退出草稿模式' : 'Click the draft button again to exit Draft Mode'}</li>
                     <li>${currentLang === 'zh' ? '草稿数字不会影响游戏判定' : 'Draft numbers don\'t affect game validation'}</li>
                 </ul>
                 <h3>${t.interface}</h3>
                 <ul>
-                    <li>🌓: ${currentLang === 'zh' ? '切换深色/浅色主题' : 'Toggle dark/light theme'}</li>
-                    <li>中/En: ${currentLang === 'zh' ? '切换中文/英文界面' : 'Switch between Chinese/English'}</li>
-                    <li>?: ${currentLang === 'zh' ? '显示/隐藏帮助信息' : 'Show/hide help information'}</li>
-                    <li>✎: ${currentLang === 'zh' ? '切换草稿模式' : 'Toggle Draft Mode'}</li>
+                    <li><img src="assets/brightness-high-fill.svg" alt="浅色模式" class="help-icon light-only"><img src="assets/moon-stars-fill.svg" alt="深色模式" class="help-icon dark-only"> ${currentLang === 'zh' ? '切换深色/浅色主题' : 'Toggle dark/light theme'}</li>
+                    <li><img src="assets/translate.svg" alt="语言" class="help-icon"> ${currentLang === 'zh' ? '切换中文/英文界面' : 'Switch between Chinese/English'}</li>
+                    <li><img src="assets/question-lg.svg" alt="帮助" class="help-icon"> ${currentLang === 'zh' ? '显示/隐藏帮助信息' : 'Show/hide help information'}</li>
+                    <li><img src="assets/pen-fill.svg" alt="草稿" class="help-icon"> ${currentLang === 'zh' ? '切换草稿模式' : 'Toggle Draft Mode'}</li>
                 </ul>
             `;
         }
@@ -841,14 +994,16 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
         function showLoading() {
             loadingOverlay.style.display = 'block';
             generateButton.disabled = true;
-            generateButton.textContent = translations[currentLang].loading;
+            const buttonText = document.querySelector('#generate .button-text');
+            buttonText.textContent = translations[currentLang].loading;
         }
 
         // 隐藏加载动画
         function hideLoading() {
             loadingOverlay.style.display = 'none';
             generateButton.disabled = false;
-            generateButton.textContent = translations[currentLang].generate;
+            const buttonText = document.querySelector('#generate .button-text');
+            buttonText.textContent = translations[currentLang].generate;
         }
 
         // 更新数独显示
@@ -861,7 +1016,10 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
                 const mainNumber = cell.querySelector('.main-number');
                 
                 mainNumber.textContent = value || '';
-                cell.classList.toggle('initial', sudokuBoard.isInitialCell(row, col));
+                
+                // 添加初始单元格标记
+                const isInitial = sudokuBoard.isInitialCell(row, col);
+                cell.classList.toggle('initial', isInitial);
                 
                 // 更新草稿数字
                 const draftNumbers = sudokuBoard.getDraftNumbers?.(row, col) || [];
@@ -1143,17 +1301,6 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             }
         }
 
-        // 切换草稿模式
-        draftToggle.addEventListener('click', () => {
-            isDraftMode = !isDraftMode;
-            document.body.classList.toggle('draft-mode', isDraftMode);
-            draftToggle.classList.toggle('active', isDraftMode);
-            draftToggle.title = translations[currentLang].draft[isDraftMode ? 'exit' : 'enter'];
-            
-            // 不再显示草稿模式状态提示
-            saveSettings();
-        });
-
         // 新的草稿按钮点击事件处理
         const draftButton = document.getElementById('draftButton');
         const draftButtonText = document.getElementById('draftButtonText');
@@ -1165,15 +1312,65 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             
             // 更新按钮文本
             draftButtonText.textContent = currentLang === 'zh' ? 
-                (isDraftMode ? '退出草稿模式' : '进入草稿模式') :
-                (isDraftMode ? 'Exit Draft Mode' : 'Enter Draft Mode');
+                (isDraftMode ? '草稿' : '草稿') :
+                (isDraftMode ? 'Draft' : 'Draft');
             
             // 不再显示草稿模式状态提示，按钮文本已经足够明确
             saveSettings();
         });
 
+        function adjustFunctionButtons() {
+            const functionButtonsContainer = document.querySelector('.function-buttons');
+            const buttons = document.querySelectorAll('.function-button');
+            const buttonTexts = document.querySelectorAll('.function-button .button-text');
+            
+            // 获取可用宽度
+            const containerWidth = functionButtonsContainer.offsetWidth;
+            const totalButtonsWidth = Array.from(buttons).reduce((total, btn) => total + btn.offsetWidth, 0);
+            
+            // 如果按钮总宽度超过容器宽度，隐藏文本
+            if (totalButtonsWidth > containerWidth) {
+                buttonTexts.forEach(text => {
+                    text.style.display = 'none';
+                });
+                
+                // 移除图标右边距
+                document.querySelectorAll('.function-icon').forEach(icon => {
+                    icon.style.marginRight = '0';
+                });
+            } else {
+                // 否则显示文本
+                buttonTexts.forEach(text => {
+                    text.style.display = '';
+                });
+                
+                // 恢复图标右边距
+                document.querySelectorAll('.function-icon').forEach(icon => {
+                    icon.style.marginRight = '5px';
+                });
+            }
+        }
+        
+        // 在窗口调整大小和页面加载时调用此函数
+        window.addEventListener('resize', adjustFunctionButtons);
+        window.addEventListener('load', adjustFunctionButtons);
+        
+        // 在init函数末尾添加调用
+        function init() {
+            createGrid();
+            loadSettings();
+            updateUI();
+            initSoftKeyboard();
+            
+            // 在加载时更新草稿按钮状态
+            draftButton.classList.toggle('active', isDraftMode);
+            
+            // 调整功能按钮显示
+            adjustFunctionButtons();
+        }
+
         // 初始化应用
         init();
     </script>
 </body>
-</html> 
+</html>
