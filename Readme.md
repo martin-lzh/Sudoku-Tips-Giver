@@ -87,7 +87,9 @@ The static version is a pure frontend implementation that can be deployed direct
 - Auto-saves to browser storage | 自动保存到浏览器存储
 - Cross-device sync via browser | 通过浏览器实现跨设备同步
 
-### Option 2: Full Version (with Backend) | 选项二：完整版本（带后端）
+### Option 2: Full Version (with Backend) | 选项二：完整版本（带后端）[DEPRECATED | 已过时]
+
+**Note: This deployment option is deprecated and no longer supported. | 注意：此部署选项已过时，不再受支持。**
 
 The full version includes a Flask backend for enhanced functionality:
 
@@ -112,10 +114,10 @@ The full version includes a Flask backend for enhanced functionality:
 - Full backend support | 完整后端支持
 - Enhanced security | 增强的安全性
 - Server-side validation | 服务器端验证
-- Database support | 数据库支持
-- User accounts (optional) | 用户账户（可选）
 
-### Option 3: Docker Deployment | 选项三：Docker 部署
+### Option 3: Docker Deployment | 选项三：Docker 部署 [DEPRECATED | 已过时]
+
+**Note: This deployment option is deprecated and no longer supported. | 注意：此部署选项已过时，不再受支持。**
 
 Deploy using Docker for containerized environment:
 
@@ -189,4 +191,4 @@ Copyright (c) 2025 Sudoku Tips Giver. All rights reserved.
   - Preserves user preferences | 保存用户偏好设置
   - Works offline | 支持离线使用
 - **Step-by-step solution display | 逐步显示解决方案**
-- **Instant completion validation | 即时完成验证** 
+- **Instant completion validation | 即时完成验证**
