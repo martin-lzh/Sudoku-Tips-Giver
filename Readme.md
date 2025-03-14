@@ -11,6 +11,11 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
   - Medium (25-30 numbers) | 中等 (25-30 个数字)
   - Hard (20-25 numbers) | 困难 (20-25 个数字)
 
+- **Manual Puzzle Input | 手动输入谜题**
+  - Input puzzles from external sources | 从外部来源输入数独谜题
+  - Get hints for manually entered puzzles | 为手动输入的谜题获取提示
+  - Solve puzzles from newspapers, books, or other apps | 解决来自报纸、书籍或其他应用的数独
+
 - **Smart Hint System | 智能提示系统**
   - Provides intelligent hints | 提供智能提示
   - Shows possible numbers | 显示可能数字
