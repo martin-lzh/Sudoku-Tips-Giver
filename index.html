@@ -131,6 +131,7 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             background-color: var(--bg-color);
             position: relative;
             transition: all 0.3s ease;
+            box-sizing: border-box; /* 确保边框包含在尺寸内 */
         }
 
         /* 添加3x3区域的边框 */
@@ -144,9 +145,23 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             border-right: 2px solid var(--cell-border);
         }
 
-        .cell.highlight {
-            background-color: var(--highlight-color);
-            opacity: 0.8;
+        .cell::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: calc(var(--cell-size) * 0.05) solid transparent;
+            box-sizing: border-box;
+            pointer-events: none;
+            z-index: 3;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .cell.highlight::before {
+            border-color: var(--highlight-color);
+            box-shadow: 0 0 5px var(--highlight-color);
         }
 
         .cell .main-number {
@@ -167,24 +182,27 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(3, 1fr);
-            width: 100%;
-            height: 100%;
+            width: 90%;
+            height: 90%;
             z-index: 1;
-            position: absolute;
-            top: 0;
-            left: 0;
-            padding: 2px;
+            position: relative;
+            margin: auto;
+            padding: calc(var(--cell-size) * 0.05);
             box-sizing: border-box;
         }
 
         .cell .draft-number {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: calc(var(--cell-size) * 0.3);
+            align-items: center; /* 垂直居中 */
+            justify-content: center; /* 水平居中 */
+            font-size: calc(var(--cell-size) * 0.25);
             color: var(--draft-color);
             width: 100%;
             height: 100%;
+            margin: 0;
+            padding: 0;
+            line-height: 1; /* 确保文本垂直居中 */
+            text-align: center; /* 确保文本水平居中 */
         }
 
         [data-theme="dark"] .cell .draft-number {
@@ -193,6 +211,46 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
 
         .draft-mode .cell {
             cursor: crosshair;
+        }
+
+        /* 移除顶部草稿按钮的样式 */
+        .draft-toggle {
+            display: none;
+        }
+
+        /* 新的长条形草稿按钮样式 */
+        .draft-button-container {
+            width: calc(9 * var(--cell-size) + 8px);
+            margin: 10px auto;
+        }
+
+        .draft-button {
+            width: 100%;
+            padding: 8px 0;
+            font-size: 16px;
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .draft-button.active {
+            background-color: var(--highlight-color);
+            transform: scale(1.02);
+        }
+
+        .draft-button:hover {
+            background-color: var(--button-hover);
+        }
+
+        .draft-icon {
+            margin-right: 8px;
         }
 
         .help-button {
@@ -438,6 +496,14 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             <!-- 数独格子将通过 JavaScript 动态生成 -->
         </div>
 
+        <!-- 新的草稿按钮放在数独九宫格下方、软键盘上方 -->
+        <div class="draft-button-container">
+            <button id="draftButton" class="draft-button">
+                <span class="draft-icon">✎</span>
+                <span id="draftButtonText">进入草稿模式</span>
+            </button>
+        </div>
+
         <div class="soft-keyboard" id="softKeyboard">
             <button class="soft-key" data-value="1">1</button>
             <button class="soft-key" data-value="2">2</button>
@@ -653,6 +719,11 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             answerButton.textContent = t.answer;
             clearButton.textContent = t.clear;
             
+            // 更新草稿按钮文本
+            draftButtonText.textContent = isDraftMode ? 
+                (currentLang === 'zh' ? '退出草稿模式' : 'Exit Draft Mode') : 
+                (currentLang === 'zh' ? '进入草稿模式' : 'Enter Draft Mode');
+            
             // 更新难度选择
             difficultySelect.innerHTML = `
                 <option value="easy">${t.easy}</option>
@@ -736,7 +807,7 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             // 更新界面状态
             document.body.setAttribute('data-theme', currentTheme);
             document.body.classList.toggle('draft-mode', isDraftMode);
-            draftToggle.classList.toggle('active', isDraftMode);
+            draftButton.classList.toggle('active', isDraftMode); // 更新新草稿按钮状态
         }
 
         // 保存设置
@@ -1079,11 +1150,26 @@ A web application that helps users solve Sudoku puzzles with intelligent hints.
             draftToggle.classList.toggle('active', isDraftMode);
             draftToggle.title = translations[currentLang].draft[isDraftMode ? 'exit' : 'enter'];
             
-            // 显示草稿模式状态提示
-            messageDiv.textContent = currentLang === 'zh' ? 
-                (isDraftMode ? '已进入草稿模式，可以在格子中添加多个数字' : '已退出草稿模式') :
-                (isDraftMode ? 'Entered Draft Mode, you can add multiple numbers in cells' : 'Exited Draft Mode');
-            messageDiv.className = 'message success';
+            // 不再显示草稿模式状态提示
+            saveSettings();
+        });
+
+        // 新的草稿按钮点击事件处理
+        const draftButton = document.getElementById('draftButton');
+        const draftButtonText = document.getElementById('draftButtonText');
+        
+        draftButton.addEventListener('click', () => {
+            isDraftMode = !isDraftMode;
+            document.body.classList.toggle('draft-mode', isDraftMode);
+            draftButton.classList.toggle('active', isDraftMode);
+            
+            // 更新按钮文本
+            draftButtonText.textContent = currentLang === 'zh' ? 
+                (isDraftMode ? '退出草稿模式' : '进入草稿模式') :
+                (isDraftMode ? 'Exit Draft Mode' : 'Enter Draft Mode');
+            
+            // 不再显示草稿模式状态提示，按钮文本已经足够明确
+            saveSettings();
         });
 
         // 初始化应用
